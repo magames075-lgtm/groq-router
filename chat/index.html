@@ -12,7 +12,7 @@
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh}
 header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
-header b{font-size:18px;letter-spacing:.5px}header b span{color:var(--ac)}
+header .hb{white-space:nowrap}header b{font-size:18px;letter-spacing:.5px}header b span{color:var(--ac)}
 .dot{width:9px;height:9px;border-radius:50%;background:#f43f5e}.dot.on{background:#22c55e}
 header .sp{flex:1}
 .hb{background:none;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:7px 10px;font-size:14px}
@@ -29,6 +29,12 @@ form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bott
 #in{flex:1;min-height:44px;max-height:130px;resize:none;background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:22px;padding:11px 15px;font:inherit}
 .rb{width:46px;height:46px;border-radius:50%;border:0;font-size:20px;color:#fff;background:var(--card);border:1px solid var(--line)}
 #send{background:var(--ac);color:#001018;border:0}
+#live.on{background:#22c55e;color:#001018;border-color:#22c55e}
+#orb{display:none;position:fixed;inset:0;background:rgba(5,8,13,.94);z-index:9;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+#orb.on{display:flex}#bola{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#7dd3fc,#2563eb 60%,#1e1b4b);box-shadow:0 0 60px #2563eb;transition:transform .3s}
+#orb.ouvindo #bola{animation:resp 1.4s infinite}#orb.falando #bola{animation:fala .5s infinite alternate}#orb.pensando #bola{animation:gira 1.2s linear infinite;filter:hue-rotate(60deg)}
+@keyframes resp{50%{transform:scale(1.12)}}@keyframes fala{to{transform:scale(1.2)}}@keyframes gira{to{transform:rotate(360deg)}}
+#orbTxt{color:var(--mu);font-size:15px;text-align:center;max-width:85%;min-height:44px}#orbFim{background:#f43f5e;color:#fff;border:0;border-radius:999px;padding:12px 26px;font-size:16px}
 #mic.rec{background:#f43f5e;animation:p 1s infinite}@keyframes p{50%{opacity:.6}}
 dialog{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:14px;width:min(92vw,420px)}
 dialog input,dialog select{width:100%;padding:10px;margin:6px 0 12px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:8px;font:inherit}
@@ -40,8 +46,9 @@ small{color:var(--mu)}
 <body>
 <header>
   <span class="dot" id="dot"></span><b>SEXTA<span>·</span>IA</b><span class="sp"></span>
+  <button class="hb" id="live" title="Conversa ao vivo">🎙 Ao vivo</button>
   <button class="hb" id="voz" title="Voz">🔊</button>
-  <button class="hb" onclick="limpar()">Limpar</button>
+  <button class="hb" onclick="limpar()" title="Limpar">🗑</button>
   <button class="hb" onclick="cfg.showModal()">⚙︎</button>
 </header>
 <div id="log"></div>
@@ -55,9 +62,10 @@ small{color:var(--mu)}
   <button class="rb" id="send" title="Enviar">➤</button>
 </form>
 
+<div id="orb"><div id="bola"></div><div id="orbEst" style="font-size:18px">Ouvindo…</div><div id="orbTxt"></div><button id="orbFim">Encerrar conversa</button></div>
 <dialog id="cfg">
   <h3 style="margin-top:0">Configurar</h3>
-  <small>Chave da GroqCloud (começa com gsk_). Crie grátis em console.groq.com/keys. Fica salva só neste aparelho.</small>
+  <small>Funciona sem chave nenhuma. Opcional: chave da GroqCloud (gsk_) deixa as respostas mais rápidas e sem fila.</small>
   <input id="key" type="password" placeholder="gsk_..." autocomplete="off">
   <small>Seu nome (opcional)</small>
   <input id="nome" placeholder="Como te chamo?">
@@ -75,19 +83,19 @@ let KEY=ls.get("sx_key",""),NOME=ls.get("sx_nome",""),AUTO=ls.get("sx_auto",true
 let HIST=ls.get("sx_hist",[]),NOTAS=ls.get("sx_notas",[]);
 const LEVE="openai/gpt-oss-20b",POTENTE="openai/gpt-oss-120b";
 
-function atualizaTopo(){$("dot").classList.toggle("on",!!KEY);$("voz").textContent=VOZ?"🔊":"🔇"}
+function atualizaTopo(){$("dot").classList.add("on");$("voz").textContent=VOZ?"🔊":"🔇"}
 $("voz").onclick=()=>{VOZ=!VOZ;ls.set("sx_voz",VOZ);if(!VOZ)speechSynthesis.cancel();atualizaTopo()};
 function salvarCfg(){const k=$("key").value.trim();if(k&&!k.startsWith("gsk_")){alert("A chave da Groq começa com gsk_");return}
-  if(k)KEY=k;NOME=$("nome").value.trim();AUTO=$("autoAbrir").checked;ls.set("sx_key",KEY);ls.set("sx_nome",NOME);ls.set("sx_auto",AUTO);cfg.close();atualizaTopo();
-  if(KEY)sys("Pronto, estou conectada.")}
+  KEY=k;NOME=$("nome").value.trim();AUTO=$("autoAbrir").checked;ls.set("sx_key",KEY);ls.set("sx_nome",NOME);ls.set("sx_auto",AUTO);cfg.close();atualizaTopo();
+  sys(KEY?"Usando sua chave Groq (modo rápido).":"Usando o modo grátis, sem chave.")}
 $("nome").value=NOME;$("autoAbrir").checked=AUTO;
 
 function bolha(cls,txt,meta){const d=document.createElement("div");d.className="m "+cls;d.textContent=txt;if(meta){const s=document.createElement("div");s.className="meta";s.textContent=meta;d.appendChild(s)}$("log").appendChild(d);$("log").scrollTop=1e9;return d}
 function sys(t){const d=document.createElement("div");d.className="sys";d.textContent=t;$("log").appendChild(d);$("log").scrollTop=1e9}
 function botao(el,rot,fn){const b=document.createElement("button");b.className="act";b.textContent=rot;b.onclick=fn;el.appendChild(document.createElement("br"));el.appendChild(b)}
 
-function falar(t){if(!VOZ||!("speechSynthesis" in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/https?:\S+/g,"").slice(0,600));u.lang="pt-BR";u.rate=1.05;
-  const v=speechSynthesis.getVoices().find(v=>v.lang.startsWith("pt")&&/female|fem|Luciana|Francisca/i.test(v.name))||speechSynthesis.getVoices().find(v=>v.lang.startsWith("pt"));if(v)u.voice=v;speechSynthesis.speak(u)}
+function falar(t){if(!VOZ||!("speechSynthesis" in window)){if(AO_VIVO)setTimeout(ouvirVivo,400);return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/https?:\S+/g,"").slice(0,600));u.lang="pt-BR";u.rate=1.05;
+  const v=speechSynthesis.getVoices().find(v=>v.lang.startsWith("pt")&&/female|fem|Luciana|Francisca/i.test(v.name))||speechSynthesis.getVoices().find(v=>v.lang.startsWith("pt"));if(v)u.voice=v;u.onstart=()=>AO_VIVO&&estado("falando","");u.onend=u.onerror=()=>{if(AO_VIVO)setTimeout(ouvirVivo,350)};speechSynthesis.speak(u)}
 
 // ---------- Roteador ----------
 function complexidade(t){let s=0;const x=t.toLowerCase();if(t.length>220)s+=2;if(t.length>600)s+=2;
@@ -113,7 +121,7 @@ Tipos disponíveis:
 Regras: use ação sempre que o pedido for algo para FAZER. Para cálculos e perguntas, responda direto. Não invente que fez algo que não está nessa lista; se pedirem algo impossível (ex.: mexer em configurações do celular, comprar, acessar arquivos), diga com honestidade e ofereça a alternativa mais próxima.`;
 
 function sistema(){const agora=new Date().toLocaleString("pt-BR",{dateStyle:"full",timeStyle:"short"});
-  return `Você é a Sexta, assistente pessoal em português do Brasil, inspirada na F.R.I.D.A.Y. dos filmes: direta, calorosa, um pouco espirituosa. Respostas curtas (até 4 frases) a menos que peçam detalhe, porque também são lidas em voz alta. Sem markdown pesado.
+  return `Você é a Sexta, assistente pessoal em português do Brasil, inspirada na F.R.I.D.A.Y. dos filmes: direta, calorosa, um pouco espirituosa. Converse de forma natural, como numa ligação: respostas curtas (até 3 frases) a menos que peçam detalhe, porque são lidas em voz alta. Faça perguntas de volta quando fizer sentido. Sem markdown pesado.
 Agora: ${agora}. ${NOME?"O usuário se chama "+NOME+".":""}
 Notas salvas do usuário: ${NOTAS.length?NOTAS.map((n,i)=>(i+1)+". "+n).join(" | "):"nenhuma"}.
 ${ACOES_DESC}`}
@@ -154,19 +162,31 @@ async function groq(model,msgs){let r;
   if(!r.ok){if(j.error?.code==="invalid_api_key")throw new Error("chave inválida. Toque em ⚙︎ e cole de novo");if(r.status===429)throw new Error("limite grátis da Groq atingido, espere um minuto");throw new Error(j.error?.message||"erro "+r.status)}
   return (j.choices?.[0]?.message?.content||"").trim()}
 
+// ---------- Provedor grátis sem chave (Pollinations) ----------
+const espera=ms=>new Promise(r=>setTimeout(r,ms));
+async function gratis(msgs,status){for(let i=0;i<8;i++){let r;
+    try{r=await fetch("https://text.pollinations.ai/openai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"openai",messages:msgs,referrer:"sexta-ia"})})}
+    catch(e){if(i>2)throw new Error("sem internet");await espera(2000);continue}
+    if(r.status===402||r.status===429||r.status>=500){status&&status(i);await espera(4000+i*1500);continue}
+    let j={};try{j=await r.json()}catch(e){}
+    if(!r.ok)throw new Error(j.error?.message||j.error||"erro "+r.status);
+    const c=(j.choices?.[0]?.message?.content||"").trim();if(c)return c;await espera(1500)}
+  throw new Error("o servidor grátis está lotado agora, tenta de novo em um minuto")}
+async function responder(model,msgs,status){if(KEY){try{return await groq(model,msgs)}catch(e){if(/chave inválida/.test(e.message))throw e}}return await gratis(msgs,status)}
+
 let ocupado=false;
 async function enviar(txt){txt=txt.trim();if(!txt||ocupado)return;
-  if(!KEY){bolha("u",txt);sys("Preciso da sua chave da Groq primeiro.");cfg.showModal();return}
   ocupado=true;$("send").disabled=true;bolha("u",txt);$("in").value="";autoAltura();
   const el=bolha("a","…");const model=complexidade(txt)>=3?POTENTE:LEVE;const t0=performance.now();
   HIST.push({role:"user",content:txt});
-  try{let resp=await groq(model,[{role:"system",content:sistema()},...HIST.slice(-16)]);
-    if(!resp)resp=await groq(POTENTE,[{role:"system",content:sistema()},...HIST.slice(-16)]);
+  const st=i=>{el.textContent="… (fila do servidor grátis, aguarde)";estado("pensando","Na fila, só um instante…")};
+  try{let resp=await responder(model,[{role:"system",content:sistema()},...HIST.slice(-16)],st);
+    if(!resp&&KEY)resp=await groq(POTENTE,[{role:"system",content:sistema()},...HIST.slice(-16)]);
     const ms=Math.round(performance.now()-t0);const {limpo,acoes}=extrairAcoes(resp||"Não consegui responder agora, tenta de novo?");
-    el.textContent=limpo||"Feito.";addMeta(el,(model===POTENTE?"modelo potente":"modelo leve")+" · "+ms+" ms");
+    el.textContent=limpo||"Feito.";addMeta(el,(KEY?(model===POTENTE?"Groq potente":"Groq leve"):"grátis")+" · "+(ms/1000).toFixed(1)+" s");
     HIST.push({role:"assistant",content:resp});ls.set("sx_hist",HIST.slice(-40));
-    acoes.forEach(a=>executar(a,el));falar(limpo||"Feito.")}
-  catch(e){el.textContent="⚠️ "+e.message;HIST.pop()}
+    acoes.forEach(a=>executar(a,el));if(AO_VIVO)estado("falando",limpo||"Feito.");falar(limpo||"Feito.")}
+  catch(e){el.textContent="⚠️ "+e.message;HIST.pop();if(AO_VIVO){estado("falando",e.message);falar(e.message)}}
   ocupado=false;$("send").disabled=false;$("log").scrollTop=1e9}
 
 function limpar(){if(!confirm("Apagar a conversa? (as notas ficam)"))return;HIST=[];ls.set("sx_hist",[]);$("log").innerHTML="";boasVindas()}
@@ -188,7 +208,23 @@ $("mic").onclick=()=>{if(!SR){sys("Seu navegador não tem reconhecimento de voz.
   rec.onend=()=>{gravando=false;$("mic").classList.remove("rec");if(final)enviar(final)};
   rec.start()};
 
-function boasVindas(){bolha("a",(NOME?"Oi, "+NOME+"! ":"Oi! ")+"Sou a Sexta. Fale no 🎤 ou digite: abro sites, toco no YouTube, traço rotas, monto mensagens de WhatsApp, marco timers e guardo notas."+(KEY?"":"\n\nToque em ⚙︎ e cole sua chave da Groq pra começar."))}
+// ---------- Conversa ao vivo ----------
+let AO_VIVO=false,recV=null;
+function estado(c,t){if(!AO_VIVO)return;$("orb").className="on "+c;$("orbEst").textContent={ouvindo:"Ouvindo…",pensando:"Pensando…",falando:"Falando…"}[c]||"";if(t!==undefined)$("orbTxt").textContent=t}
+function ouvirVivo(){if(!AO_VIVO)return;if(!SR){sys("Use o Chrome para o modo ao vivo.");pararVivo();return}
+  try{recV&&recV.abort()}catch(e){}
+  recV=new SR();recV.lang="pt-BR";recV.interimResults=true;recV.continuous=false;let final="";
+  recV.onstart=()=>estado("ouvindo","");
+  recV.onresult=e=>{let t="";for(const r of e.results){t+=r[0].transcript;if(r.isFinal)final=t}$("orbTxt").textContent=t};
+  recV.onerror=e=>{if(e.error==="not-allowed"){sys("Libere o microfone nas permissões do Chrome.");pararVivo()}};
+  recV.onend=()=>{if(!AO_VIVO)return;if(final){estado("pensando",final);enviar(final)}else setTimeout(ouvirVivo,250)};
+  try{recV.start()}catch(e){setTimeout(ouvirVivo,600)}}
+function iniciarVivo(){AO_VIVO=true;VOZ=true;ls.set("sx_voz",true);atualizaTopo();$("live").classList.add("on");speechSynthesis.cancel();ouvirVivo()}
+function pararVivo(){AO_VIVO=false;$("live").classList.remove("on");$("orb").className="";try{recV&&recV.abort()}catch(e){}speechSynthesis.cancel()}
+$("live").onclick=()=>AO_VIVO?pararVivo():iniciarVivo();$("orbFim").onclick=pararVivo;
+$("bola").onclick=()=>{speechSynthesis.cancel()};
+
+function boasVindas(){bolha("a",(NOME?"Oi, "+NOME+"! ":"Oi! ")+"Sou a Sexta. Fale no 🎤 ou digite: abro sites, toco no YouTube, traço rotas, monto mensagens de WhatsApp, marco timers e guardo notas."+"\n\nToque em 🎙 Ao vivo pra conversar por voz, sem digitar nada.")}
 if(HIST.length){HIST.slice(-12).forEach(m=>{const {limpo}=extrairAcoes(m.content);bolha(m.role==="user"?"u":"a",limpo||"Feito.")})}else boasVindas();
 atualizaTopo();if("speechSynthesis" in window)speechSynthesis.getVoices();
 </script>
