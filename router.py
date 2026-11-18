@@ -32,13 +32,14 @@ def executar(tarefa: str, modelo: str | None = None) -> dict:
     r = client.chat.completions.create(
         model=modelo,
         messages=[{"role": "user", "content": tarefa}],
-        max_tokens=400,
+        max_tokens=800,
+        reasoning_effort="low",
     )
     lat = time.perf_counter() - inicio
     return {
         "tarefa": tarefa[:60], "modelo": modelo, "latencia_s": round(lat, 3),
         "tokens": r.usage.completion_tokens if r.usage else None,
-        "resposta": r.choices[0].message.content.strip()[:200],
+        "resposta": (r.choices[0].message.content or "").strip()[:200],
     }
 
 if __name__ == "__main__":
