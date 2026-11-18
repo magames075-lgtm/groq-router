@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05080d">
+<title>Omni-Shield · Console</title>
+<style>
+:root{--bg:#05080d;--pn:#0b111a;--ln:#16212f;--tx:#cfe3f2;--mu:#5f7a90;--ok:#19e68c;--wa:#ffb020;--cr:#ff3b5c;--ac:#21c7ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font:13px/1.4 ui-monospace,"JetBrains Mono",Consolas,monospace;min-height:100vh;
+ background-image:linear-gradient(rgba(33,199,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(33,199,255,.04) 1px,transparent 1px);background-size:24px 24px}
+header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:rgba(5,8,13,.95);z-index:5;flex-wrap:wrap}
+.logo{font-weight:700;letter-spacing:.18em;color:var(--ac)}
+.logo b{color:var(--tx)}
+.chip{border:1px solid var(--ln);padding:3px 8px;border-radius:3px;color:var(--mu);font-size:11px}
+.chip.ok{color:var(--ok);border-color:#0f5a3a}.chip.cr{color:var(--cr);border-color:#6a1424}
+.sp{flex:1}
+button{background:transparent;color:var(--tx);border:1px solid var(--ln);padding:6px 10px;border-radius:3px;font:inherit;cursor:pointer}
+button:hover{border-color:var(--ac)}
+#crisis{border-color:#6a1424;color:var(--cr)}
+body.crisis #crisis{background:var(--cr);color:#000}
+body.crisis header{box-shadow:0 0 0 2px var(--cr) inset}
+main{display:grid;gap:12px;padding:12px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.p{background:var(--pn);border:1px solid var(--ln);border-radius:4px;padding:12px;position:relative;overflow:hidden}
+.p h2{font-size:11px;letter-spacing:.14em;color:var(--mu);text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between}
+.p h2 span{color:var(--ac)}
+canvas{width:100%;height:140px;display:block}
+.kv{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin-top:8px;font-size:12px}
+.kv dt{color:var(--mu)}.kv dd{text-align:right}
+.feed{max-height:180px;overflow:auto;font-size:12px}
+.feed div{padding:4px 0;border-bottom:1px dashed var(--ln)}
+.feed .t{color:var(--mu)}
+.core{display:flex;align-items:center;gap:8px;margin-top:6px}
+.dot{width:10px;height:10px;border-radius:50%;background:#1d2a38}
+.dot.on{background:var(--cr);box-shadow:0 0 12px var(--cr)}
+.bar{height:6px;background:#111b27;border-radius:3px;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;background:var(--ac);transition:width .4s}
+.ok{color:var(--ok)}.wa{color:var(--wa)}.cr{color:var(--cr)}
+textarea,input,select{width:100%;background:#070c13;color:var(--tx);border:1px solid var(--ln);border-radius:3px;padding:8px;font:inherit}
+.row{display:flex;gap:6px;margin-top:6px}
+.wide{grid-column:1/-1}
+#out{white-space:pre-wrap;margin-top:8px;font-size:12px;max-height:220px;overflow:auto}
+footer{padding:14px;color:var(--mu);font-size:11px;text-align:center}
+dialog{background:var(--pn);color:var(--tx);border:1px solid var(--ln);padding:16px;max-width:420px;width:92%}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">OMNI<b>·</b>SHIELD</div>
+ <span class="chip ok" id="kern">KERNEL LINUX · SANDBOX</span>
+ <span class="chip" id="threat">AMEAÇA: BAIXA</span>
+ <span class="chip" id="clock">--:--:--</span>
+ <div class="sp"></div>
+ <button onclick="cfg.showModal()">CHAVE</button>
+ <button id="crisis" onclick="toggleCrisis()">MODO AUTÔNOMO</button>
+</header>
+
+<main>
+ <section class="p">
+  <h2>Monitoramento Neuromórfico <span id="evRate">0 ev/s</span></h2>
+  <canvas id="cNeuro"></canvas>
+  <div class="core"><div class="dot" id="coreDot"></div><span id="coreTxt">Núcleo principal em repouso · triagem leve ativa</span></div>
+ </section>
+
+ <section class="p">
+  <h2>Núcleo Híbrido MoE-SSM <span id="tput">0 tok/s</span></h2>
+  <canvas id="cMoe"></canvas>
+  <dl class="kv"><dt>Especialistas ativos</dt><dd id="experts">2/16</dd><dt>Estado SSM (linear)</dt><dd id="ssm">O(n)</dd><dt>Trilha autocrítica</dt><dd id="crit" class="ok">consistente</dd></dl>
+ </section>
+
+ <section class="p">
+  <h2>Mapeamento Quântico Assíncrono <span id="qsync">SYNC</span></h2>
+  <canvas id="cQ"></canvas>
+  <div class="bar"><i id="qbar" style="width:40%"></i></div>
+  <dl class="kv"><dt>Otimização de pesos</dt><dd id="qw">--</dd><dt>Rotas avaliadas</dt><dd id="qr">--</dd><dt>Fonte</dt><dd class="wa">simulação</dd></dl>
+ </section>
+
+ <section class="p">
+  <h2>Radar de Inteligência Competitiva <span>ÉTICO</span></h2>
+  <div class="feed" id="radar"></div>
+  <div class="row"><button onclick="radarIA()">Sintetizar com IA</button></div>
+ </section>
+
+ <section class="p">
+  <h2>Financeiro e Defesa <span id="lat">-- ns</span></h2>
+  <canvas id="cFin"></canvas>
+  <dl class="kv"><dt>Previsão (próx. 10 ticks)</dt><dd id="prev">--</dd><dt>Pentest autorizado</dt><dd id="pt" class="mu">escopo: localhost</dd><dt>Portas verificadas</dt><dd id="ports">0</dd></dl>
+ </section>
+
+ <section class="p wide">
+  <h2>Console · Roteador Groq <span id="route">aguardando</span></h2>
+  <textarea id="q" rows="3" placeholder="Pergunte ou dê uma tarefa. Simples vai ao modelo leve, complexa ao potente."></textarea>
+  <div class="row"><button onclick="ask()">Executar</button><button onclick="document.getElementById('out').textContent=''">Limpar</button></div>
+  <div id="out"></div>
+ </section>
+</main>
+<footer>Omni-Shield v0.1 · Os módulos neuromórfico, quântico e financeiro exibem dados simulados no navegador. O console usa a GroqCloud de verdade.</footer>
+
+<dialog id="cfg">
+ <p style="margin-bottom:8px">Chave da API GroqCloud (fica só neste aparelho):</p>
+ <input id="key" type="password" placeholder="gsk_...">
+ <div class="row"><button onclick="saveKey()">Salvar</button><button onclick="cfg.close()">Fechar</button></div>
+</dialog>
+
+<script>
+const LEVE="openai/gpt-oss-20b",POTENTE="openai/gpt-oss-120b";
+const $=id=>document.getElementById(id);
+let crisis=false,threat=0,t=0;
+let KEY="";try{KEY=localStorage.getItem("groq_key")||""}catch(e){}
+function saveKey(){KEY=$("key").value.trim();try{localStorage.setItem("groq_key",KEY)}catch(e){}cfg.close()}
+
+function fit(c){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;const x=c.getContext("2d");x.setTransform(d,0,0,d,0,0);return[x,r.width,r.height]}
+const series=(n,v)=>Array.from({length:n},()=>v);
+const S={neuro:series(80,0),moe:series(60,.3),fin:series(80,100),q:Array.from({length:24},()=>({a:Math.random()*6.28,r:20+Math.random()*40,s:.01+Math.random()*.03}))};
+
+function line(c,data,color,min,max){const[x,w,h]=fit(c);x.strokeStyle="#16212f";for(let i=1;i<4;i++){x.beginPath();x.moveTo(0,h*i/4);x.lineTo(w,h*i/4);x.stroke()}
+ x.strokeStyle=color;x.lineWidth=1.5;x.beginPath();data.forEach((v,i)=>{const px=i/(data.length-1)*w,py=h-(v-min)/(max-min)*h;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();return x}
+
+function drawNeuro(){const c=$("cNeuro");const[x,w,h]=fit(c);
+ S.neuro.forEach((v,i)=>{const px=i/80*w;const col=v>.8?"#ff3b5c":v>.5?"#ffb020":"#19e68c";x.fillStyle=col;x.globalAlpha=.25+v*.75;x.fillRect(px,h-v*h,w/80-1,v*h)});x.globalAlpha=1;
+ x.strokeStyle="#ff3b5c55";x.setLineDash([4,4]);x.beginPath();x.moveTo(0,h*.2);x.lineTo(w,h*.2);x.stroke();x.setLineDash([])}
+function drawMoe(){line($("cMoe"),S.moe,"#21c7ff",0,1)}
+function drawFin(){const x=line($("cFin"),S.fin,"#19e68c",Math.min(...S.fin)-1,Math.max(...S.fin)+1)}
+function drawQ(){const c=$("cQ");const[x,w,h]=fit(c);const cx=w/2,cy=h/2;x.strokeStyle="#16212f";[25,45,65].forEach(r=>{x.beginPath();x.arc(cx,cy,r,0,6.28);x.stroke()});
+ S.q.forEach((p,i)=>{p.a+=p.s*(crisis?3:1);const px=cx+Math.cos(p.a)*p.r,py=cy+Math.sin(p.a)*p.r*.8;x.fillStyle=i%5?"#21c7ff":"#b56bff";x.beginPath();x.arc(px,py,2.2,0,6.28);x.fill();
+  if(i%3==0){x.strokeStyle="#21c7ff22";x.beginPath();x.moveTo(cx,cy);x.lineTo(px,py);x.stroke()}});
+ x.fillStyle="#b56bff";x.beginPath();x.arc(cx,cy,4,0,6.28);x.fill()}
+
+const radarItems=["Laboratórios abertos publicam modelos MoE menores e mais rápidos","Empresas investem em inferência de baixa latência (LPUs, ASICs)","Reguladores discutem transparência de modelos de uso dual","Pesquisas em SSM (Mamba) ganham espaço em contexto longo","Benchmarks de segurança e red-teaming viram padrão de mercado","Defesa: foco em detecção de ameaças cibernéticas assistida por IA"];
+function pushRadar(txt){const d=document.createElement("div");d.innerHTML=`<span class="t">${new Date().toLocaleTimeString("pt-BR")}</span> ${txt}`;$("radar").prepend(d);while($("radar").children.length>30)$("radar").lastChild.remove()}
+
+function tick(){t++;
+ // neuromorfico: eventos esparsos, picos raros
+ let ev=Math.random()<(crisis?.25:.06)?.6+Math.random()*.4:Math.random()*.35;S.neuro.push(ev);S.neuro.shift();
+ threat=Math.max(0,threat*.92+(ev>.8?.5:0));const on=ev>.8||crisis;
+ $("coreDot").classList.toggle("on",on);$("coreTxt").textContent=on?"NÚCLEO PRINCIPAL ATIVADO · ameaça em análise":"Núcleo principal em repouso · triagem leve ativa";
+ $("evRate").textContent=Math.round(800+Math.random()*400*(crisis?4:1))+" ev/s";
+ const lvl=threat>.6?["CRÍTICA","cr"]:threat>.25?["MODERADA","wa"]:["BAIXA",""];$("threat").textContent="AMEAÇA: "+lvl[0];$("threat").className="chip "+lvl[1];
+ // MoE-SSM
+ const load=Math.min(1,.25+Math.random()*.2+(on?.4:0));S.moe.push(load);S.moe.shift();
+ $("tput").textContent=Math.round(900+load*1600)+" tok/s";$("experts").textContent=(on?6+Math.floor(Math.random()*4):2)+"/16";
+ $("crit").textContent=Math.random()<.08?"revisando hipótese":"consistente";$("crit").className=$("crit").textContent=="consistente"?"ok":"wa";
+ // quantico (simulado)
+ $("qbar").style.width=(30+Math.random()*60)+"%";$("qw").textContent=(Math.random()*.02).toFixed(4)+" Δ";$("qr").textContent=(1200+Math.floor(Math.random()*800)).toLocaleString("pt-BR");
+ $("qsync").textContent=Math.random()<.05?"RESYNC":"SYNC";
+ // financeiro
+ const last=S.fin[S.fin.length-1];S.fin.push(last+(Math.random()-.49)*1.2);S.fin.shift();
+ const trend=(S.fin[79]-S.fin[59])/20;$("prev").textContent=(trend>=0?"▲ ":"▼ ")+(S.fin[79]+trend*10).toFixed(2);$("prev").className=trend>=0?"ok":"cr";
+ $("lat").textContent=Math.round(performance.now()%1*1e3+300)+" ns";$("ports").textContent=Math.min(1024,t*7);
+ if(t%12==0)pushRadar(radarItems[Math.floor(Math.random()*radarItems.length)]);
+ if(crisis&&ev>.8)pushRadar("<span class='cr'>[AUTÔNOMO]</span> isolamento preventivo do processo suspeito simulado");
+ $("clock").textContent=new Date().toLocaleTimeString("pt-BR");
+ drawNeuro();drawMoe();drawFin();
+}
+function anim(){drawQ();requestAnimationFrame(anim)}
+function toggleCrisis(){crisis=!crisis;document.body.classList.toggle("crisis",crisis);pushRadar(crisis?"<span class='cr'>MODO AUTÔNOMO ATIVADO</span> · resposta automática a ameaças, núcleo potente prioritário":"Modo autônomo desativado")}
+
+// Roteador (mesma lógica do router.py)
+const COMPLEX=["analise","compare","explique","passo a passo","código","codigo","programa","algoritmo","otimize","arquitetura","estratégia","estrategia","plano","calcule","refatore","ameaça","vulnerabilidade"];
+function score(s){s=s.toLowerCase();let p=COMPLEX.filter(k=>s.includes(k)).length*2;p+=Math.floor(s.split(/\s+/).length/25);if(/```|def |function /.test(s))p+=2;return p}
+async function call(model,prompt){const t0=performance.now();
+ const r=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+KEY},
+  body:JSON.stringify({model,messages:[{role:"system",content:"Você é o núcleo do Omni-Shield. Responda em português, direto e preciso. Recuse qualquer ação ofensiva não autorizada."},{role:"user",content:prompt}],max_tokens:600})});
+ const j=await r.json();if(!r.ok)throw new Error(j.error?.message||r.status);return{txt:j.choices[0].message.content,ms:Math.round(performance.now()-t0)}}
+async function ask(){const p=$("q").value.trim();if(!p)return;if(!KEY){cfg.showModal();return}
+ const model=(crisis||score(p)>=2)?POTENTE:LEVE;$("route").textContent=model==LEVE?"leve · gpt-oss-20b":"potente · gpt-oss-120b";$("out").textContent="processando...";
+ try{const r=await call(model,p);$("out").textContent=`[${model} · ${r.ms} ms]\n\n${r.txt}`}catch(e){$("out").textContent="Erro: "+e.message}}
+async function radarIA(){if(!KEY){cfg.showModal();return}pushRadar("sintetizando...");
+ try{const r=await call(LEVE,"Em 4 linhas curtas, liste tendências públicas recentes no ecossistema global de IA (empresas, pesquisa, regulação, defesa), sem detalhes sensíveis.");r.txt.split("\n").filter(Boolean).slice(0,4).reverse().forEach(pushRadar)}catch(e){pushRadar("<span class='cr'>erro: "+e.message+"</span>")}}
+
+radarItems.slice(0,4).forEach(pushRadar);
+setInterval(tick,crisis?250:500);tick();anim();
+</script>
+</body>
+</html>
