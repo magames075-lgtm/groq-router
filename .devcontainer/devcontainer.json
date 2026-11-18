@@ -1,0 +1,6 @@
+{
+  "name": "groq-router",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "postCreateCommand": "pip install -r requirements.txt",
+  "secrets": { "GROQ_API_KEY": { "description": "Chave da API GroqCloud" } }
+}
