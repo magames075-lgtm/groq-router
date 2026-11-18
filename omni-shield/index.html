@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#05080d">
 <title>Omni-Shield · Console</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
 <style>
 :root{--bg:#05080d;--pn:#0b111a;--ln:#16212f;--tx:#cfe3f2;--mu:#5f7a90;--ok:#19e68c;--wa:#ffb020;--cr:#ff3b5c;--ac:#21c7ff}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--tx);font:13px/1.4 ui-monospace,"JetBrains Mono",Consolas,monospace;min-height:100vh;
  background-image:linear-gradient(rgba(33,199,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(33,199,255,.04) 1px,transparent 1px);background-size:24px 24px}
-header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:rgba(5,8,13,.95);z-index:5;flex-wrap:wrap}
+header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:rgba(5,8,13,.95);z-index:5;flex-wrap:wrap}
 .logo{font-weight:700;letter-spacing:.18em;color:var(--ac)}
 .logo b{color:var(--tx)}
 .chip{border:1px solid var(--ln);padding:3px 8px;border-radius:3px;color:var(--mu);font-size:11px}
@@ -44,6 +46,8 @@ textarea,input,select{width:100%;background:#070c13;color:var(--tx);border:1px s
 footer{padding:14px;color:var(--mu);font-size:11px;text-align:center}
 dialog{background:var(--pn);color:var(--tx);border:1px solid var(--ln);padding:16px;max-width:420px;width:92%}
 dialog::backdrop{background:rgba(0,0,0,.7)}
+@media(max-width:600px){header{position:static}.chip{font-size:10px;padding:2px 6px}#kern{display:none}button{padding:8px 10px}}
+.mu{color:var(--mu)}
 </style>
 </head>
 <body>
@@ -96,7 +100,7 @@ dialog::backdrop{background:rgba(0,0,0,.7)}
   <div id="out"></div>
  </section>
 </main>
-<footer>Omni-Shield v0.1 · Os módulos neuromórfico, quântico e financeiro exibem dados simulados no navegador. O console usa a GroqCloud de verdade.</footer>
+<footer>Omni-Shield v0.2 · Os módulos neuromórfico, quântico e financeiro exibem dados simulados no navegador. O console usa a GroqCloud de verdade.</footer>
 
 <dialog id="cfg">
  <p style="margin-bottom:8px">Chave da API GroqCloud (fica só neste aparelho):</p>
@@ -109,11 +113,11 @@ const LEVE="openai/gpt-oss-20b",POTENTE="openai/gpt-oss-120b";
 const $=id=>document.getElementById(id);
 let crisis=false,threat=0,t=0;
 let KEY="";try{KEY=localStorage.getItem("groq_key")||""}catch(e){}
-function saveKey(){KEY=$("key").value.trim();try{localStorage.setItem("groq_key",KEY)}catch(e){}cfg.close()}
+function saveKey(){KEY=$("key").value.trim();if(KEY&&!KEY.startsWith("gsk_")){alert("A chave da Groq começa com gsk_");return}try{localStorage.setItem("groq_key",KEY)}catch(e){}cfg.close()}
 
 function fit(c){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;const x=c.getContext("2d");x.setTransform(d,0,0,d,0,0);return[x,r.width,r.height]}
-const series=(n,v)=>Array.from({length:n},()=>v);
-const S={neuro:series(80,0),moe:series(60,.3),fin:series(80,100),q:Array.from({length:24},()=>({a:Math.random()*6.28,r:20+Math.random()*40,s:.01+Math.random()*.03}))};
+const series=(n,v,j=0)=>Array.from({length:n},()=>v+(Math.random()-.5)*j);
+const S={neuro:series(80,.18,.3),moe:series(60,.35,.15),fin:[],q:Array.from({length:24},()=>({a:Math.random()*6.28,r:20+Math.random()*40,s:.01+Math.random()*.03}))};
 
 function line(c,data,color,min,max){const[x,w,h]=fit(c);x.strokeStyle="#16212f";for(let i=1;i<4;i++){x.beginPath();x.moveTo(0,h*i/4);x.lineTo(w,h*i/4);x.stroke()}
  x.strokeStyle=color;x.lineWidth=1.5;x.beginPath();data.forEach((v,i)=>{const px=i/(data.length-1)*w,py=h-(v-min)/(max-min)*h;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();return x}
@@ -148,7 +152,7 @@ function tick(){t++;
  // financeiro
  const last=S.fin[S.fin.length-1];S.fin.push(last+(Math.random()-.49)*1.2);S.fin.shift();
  const trend=(S.fin[79]-S.fin[59])/20;$("prev").textContent=(trend>=0?"▲ ":"▼ ")+(S.fin[79]+trend*10).toFixed(2);$("prev").className=trend>=0?"ok":"cr";
- $("lat").textContent=Math.round(performance.now()%1*1e3+300)+" ns";$("ports").textContent=Math.min(1024,t*7);
+ $("lat").textContent=(lastMs?lastMs.toLocaleString("pt-BR")+" ms IA · ":"")+Math.round(250+Math.random()*120)+" ns sim";$("ports").textContent=Math.min(1024,t*7);
  if(t%12==0)pushRadar(radarItems[Math.floor(Math.random()*radarItems.length)]);
  if(crisis&&ev>.8)pushRadar("<span class='cr'>[AUTÔNOMO]</span> isolamento preventivo do processo suspeito simulado");
  $("clock").textContent=new Date().toLocaleTimeString("pt-BR");
@@ -160,18 +164,22 @@ function toggleCrisis(){crisis=!crisis;document.body.classList.toggle("crisis",c
 // Roteador (mesma lógica do router.py)
 const COMPLEX=["analise","compare","explique","passo a passo","código","codigo","programa","algoritmo","otimize","arquitetura","estratégia","estrategia","plano","calcule","refatore","ameaça","vulnerabilidade"];
 function score(s){s=s.toLowerCase();let p=COMPLEX.filter(k=>s.includes(k)).length*2;p+=Math.floor(s.split(/\s+/).length/25);if(/```|def |function /.test(s))p+=2;return p}
-async function call(model,prompt){const t0=performance.now();
- const r=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+KEY},
-  body:JSON.stringify({model,messages:[{role:"system",content:"Você é o núcleo do Omni-Shield. Responda em português, direto e preciso. Recuse qualquer ação ofensiva não autorizada."},{role:"user",content:prompt}],max_tokens:600})});
- const j=await r.json();if(!r.ok)throw new Error(j.error?.message||r.status);return{txt:j.choices[0].message.content,ms:Math.round(performance.now()-t0)}}
+let lastMs=0;
+async function call(model,prompt){const t0=performance.now();let r;
+ try{r=
+ await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+KEY},
+  body:JSON.stringify({model,messages:[{role:"system",content:"Você é o núcleo do Omni-Shield. Responda em português, direto e preciso. Recuse qualquer ação ofensiva não autorizada."},{role:"user",content:prompt}],max_tokens:800,reasoning_effort:"low"})})}catch(e){throw new Error("sem conexão com a Groq, confira a internet")}
+ let j={};try{j=await r.json()}catch(e){}if(!r.ok){const m=j.error?.code=="invalid_api_key"?"chave inválida, toque em CHAVE e cole de novo":r.status==429?"limite da Groq atingido, espere um minuto":(j.error?.message||"erro "+r.status);throw new Error(m)}
+ const ms=Math.round(performance.now()-t0);lastMs=ms;return{txt:(j.choices?.[0]?.message?.content||"(sem resposta, tente de novo)").trim(),ms}}
 async function ask(){const p=$("q").value.trim();if(!p)return;if(!KEY){cfg.showModal();return}
- const model=(crisis||score(p)>=2)?POTENTE:LEVE;$("route").textContent=model==LEVE?"leve · gpt-oss-20b":"potente · gpt-oss-120b";$("out").textContent="processando...";
- try{const r=await call(model,p);$("out").textContent=`[${model} · ${r.ms} ms]\n\n${r.txt}`}catch(e){$("out").textContent="Erro: "+e.message}}
+ const model=(crisis||score(p)>=2)?POTENTE:LEVE;$("route").textContent=model==LEVE?"leve · gpt-oss-20b":"potente · gpt-oss-120b";$("out").textContent="processando...";const btn=document.querySelector("button[onclick='ask()']");btn.disabled=true;
+ try{const r=await call(model,p);$("out").textContent=`[${model} · ${r.ms} ms]\n\n${r.txt}`}catch(e){$("out").textContent="Erro: "+e.message}btn.disabled=false}
 async function radarIA(){if(!KEY){cfg.showModal();return}pushRadar("sintetizando...");
  try{const r=await call(LEVE,"Em 4 linhas curtas, liste tendências públicas recentes no ecossistema global de IA (empresas, pesquisa, regulação, defesa), sem detalhes sensíveis.");r.txt.split("\n").filter(Boolean).slice(0,4).reverse().forEach(pushRadar)}catch(e){pushRadar("<span class='cr'>erro: "+e.message+"</span>")}}
 
+{let v=100;for(let i=0;i<80;i++){v+=(Math.random()-.49)*1.2;S.fin.push(v)}}
 radarItems.slice(0,4).forEach(pushRadar);
-setInterval(tick,crisis?250:500);tick();anim();
+(function loop(){tick();setTimeout(loop,crisis?250:500)})();anim();
 </script>
 </body>
 </html>
