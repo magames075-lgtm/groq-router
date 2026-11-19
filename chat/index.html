@@ -285,7 +285,10 @@ function falar(texto,depois){texto=(texto||"").replace(/https?:\S+/g,"").replace
   speechSynthesis.cancel();const partes=texto.match(/[^.!?…]+[.!?…]*/g)||[texto];let i=0;estado("falando");
   clearInterval(falaIv);falaIv=setInterval(()=>{alvo=.4+Math.random()*.6},110);
   const fim=()=>{clearInterval(falaIv);alvo=0;estado(AO_VIVO?"":"");depois&&depois()};
-  const prox=()=>{if(i>=partes.length){fim();return}const u=new SpeechSynthesisUtterance(partes[i++].trim());u.lang="pt-BR";u.rate=1.04;u.pitch=1;if(vozPt)u.voice=vozPt;u.onend=prox;u.onerror=fim;speechSynthesis.speak(u)};prox()}
+  let wd=null,acabou=false;const fim2=()=>{if(acabou)return;acabou=true;clearTimeout(wd);fim()};
+  const prox=()=>{clearTimeout(wd);if(acabou)return;if(i>=partes.length){fim2();return}const fr=partes[i++].trim();const u=new SpeechSynthesisUtterance(fr);u.lang="pt-BR";u.rate=1.04;u.pitch=1;if(vozPt)u.voice=vozPt;u.onend=prox;u.onerror=fim2;
+    wd=setTimeout(()=>{try{speechSynthesis.cancel()}catch(e){}prox()},Math.max(3500,fr.length*90));speechSynthesis.speak(u)};prox()}
+setInterval(()=>{try{if(speechSynthesis.speaking&&speechSynthesis.paused)speechSynthesis.resume()}catch(e){}},4000);
 function calar(){try{speechSynthesis.cancel()}catch(e){}clearInterval(falaIv);alvo=0}
 
 // ---------- ações ----------
@@ -324,6 +327,8 @@ ${ACOES_DESC}`}
 
 function notificar(t){try{if("Notification" in window&&Notification.permission==="granted")new Notification("SEXTA",{body:t,icon:"icon.svg"})}catch(e){}
   try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}legenda("",t);falar(t,()=>AO_VIVO&&ouvirVivo())}
+function agendar(quando,txt){const l=ls.get("sx_alarmes",[]);const id=Math.random().toString(36).slice(2);l.push({id,q:quando,t:txt});ls.set("sx_alarmes",l);armar({id,q:quando,t:txt})}
+function armar(o){setTimeout(()=>{const l=ls.get("sx_alarmes",[]);if(!l.some(x=>x.id===o.id))return;ls.set("sx_alarmes",l.filter(x=>x.id!==o.id));notificar(o.t)},Math.max(0,o.q-Date.now()))}
 function pedirNotif(){try{"Notification" in window&&Notification.permission==="default"&&Notification.requestPermission()}catch(e){}}
 
 function executar(a,bol){const enc=encodeURIComponent;let url=null,rot=null;const meta=t=>{addInfo(t);bol&&(bol.querySelector(".meta")||bol).appendChild(document.createTextNode("\n"+t))};
@@ -335,9 +340,9 @@ function executar(a,bol){const enc=encodeURIComponent;let url=null,rot=null;cons
     case"whatsapp":url="https://wa.me/"+(a.numero?String(a.numero).replace(/\D/g,""):"")+"?text="+enc(a.texto||"");rot="Enviar no WhatsApp";break;
     case"email":url="mailto:"+(a.para||"")+"?subject="+enc(a.assunto||"")+"&body="+enc(a.corpo||"");rot="Abrir e-mail";break;
     case"ligar":url="tel:"+String(a.numero||"").replace(/[^\d+]/g,"");rot="Ligar";break;
-    case"timer":{const s=Math.max(1,+a.segundos||60);pedirNotif();const fim=Date.now()+s*1000;setTimeout(()=>notificar((a.rotulo||"Timer")+" concluído."),s*1000);
+    case"timer":{const s=Math.max(1,Math.min(86400,+a.segundos||60));pedirNotif();const fim=a._fim||Date.now()+s*1000;agendar(fim,(a.rotulo||"Timer")+" concluído.");
       const d=document.createElement("div");d.className="info";$("acoes").appendChild(d);const iv=setInterval(()=>{const r=Math.max(0,Math.round((fim-Date.now())/1000));d.textContent="⏱ "+(a.rotulo||"timer")+" "+Math.floor(r/60)+":"+String(r%60).padStart(2,"0");if(!r)clearInterval(iv)},500);return}
-    case"lembrete":{const m=Math.max(.1,+a.em_minutos||1);pedirNotif();setTimeout(()=>notificar("Lembrete: "+(a.texto||"")),m*60000);meta("🔔 lembrete em "+m+" min (deixe o app aberto)");return}
+    case"lembrete":{const m=Math.max(.1,Math.min(10080,+a.em_minutos||1));pedirNotif();agendar(Date.now()+m*60000,"Lembrete: "+(a.texto||""));meta("🔔 lembrete em "+m+" min (se o app estiver fechado, aviso quando abrir)");return}
     case"nota_salvar":NOTAS.push(String(a.texto||"").slice(0,300));ls.set("sx_notas",NOTAS);hud();meta("📝 nota salva");return;
     case"nota_listar":meta(NOTAS.length?NOTAS.map((n,i)=>(i+1)+". "+n).join("\n"):"Nenhuma nota.");return;
     case"nota_apagar":{const i=+a.indice;if(i===0)NOTAS=[];else if(i>=1&&i<=NOTAS.length)NOTAS.splice(i-1,1);ls.set("sx_notas",NOTAS);hud();meta("🗑 notas: "+NOTAS.length);return}
@@ -360,14 +365,16 @@ async function groq(model,msgs,maxTok){let r;try{r=await fetch("https://api.groq
   let j={};try{j=await r.json()}catch(e){}if(!r.ok){if(j.error?.code==="invalid_api_key")throw new Error("chave Groq inválida");throw new Error(j.error?.message||"erro "+r.status)}return (j.choices?.[0]?.message?.content||"").trim()}
 async function gratis(msgs,fila){for(let i=0;i<8;i++){let r;
     try{r=await fetch("https://text.pollinations.ai/openai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"openai",messages:msgs,referrer:"sexta-ia"})})}catch(e){if(i>2)throw new Error("sem conexão com a internet");await espera(2000);continue}
-    if(r.status===402||r.status===429||r.status>=500){let w=4000+i*1500;try{const tx=await r.text();const m=tx.match(/(?:wait|after)\s+(\d+)/i);if(m)w=(+m[1]+1)*1000}catch(e){}fila&&fila(i,Math.round(w/1000));await espera(w);continue}
+    if(r.status===402||r.status===429||r.status>=500){let w=4000+i*1500;const ra=+r.headers.get("retry-after");if(ra>0&&ra<120)w=(ra+1)*1000;try{const tx=await r.text();const m=tx.match(/(?:wait|after)\s+(\d+)/i);if(m)w=(+m[1]+1)*1000}catch(e){}fila&&fila(i,Math.round(w/1000));await espera(w);continue}
     let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error?.message||"erro "+r.status);
     const c=(j.choices?.[0]?.message?.content||"").trim();if(c)return c;await espera(1500)}
   throw new Error("servidores ocupados agora, tenta de novo em um minuto")}
-async function responder(model,msgs,fila,maxTok){if(KEY){try{return await groq(model,msgs,maxTok)}catch(e){}}return await gratis(msgs,fila)}
+let avisouChave=false;
+async function responder(model,msgs,fila,maxTok){if(KEY){try{return await groq(model,msgs,maxTok)}catch(e){if(/inválida/.test(e.message)&&!avisouChave){avisouChave=true;setTimeout(()=>addInfo("⚠ Sua chave Groq foi recusada. Usando o modo grátis. Confira nos ajustes."),50)}}}return await gratis(msgs,fila)}
 
 let ocupado=false;
-async function enviar(txt){txt=(txt||"").trim().slice(0,2000);if(!txt||ocupado)return;ocupado=true;calar();limparAcoes();
+let PEND=null;
+async function enviar(txt){txt=(txt||"").trim().slice(0,2000);if(!txt)return;if(ocupado){PEND=txt;addInfo("⏳ na fila: "+txt.slice(0,60));return}ocupado=true;calar();limparAcoes();
   legenda(txt,"…");estado("pensando");bolha("u",txt);HIST.push({role:"user",content:txt});
   const busca=/pesquis|procur|not[ií]cia|hoje|agora|atual|pre[cç]o|cota[cç]|quem ganhou|placar|resultado|clima|previs|lan[cç]a|quanto (custa|t[aá])|d[oó]lar|bitcoin|jogo d|[uú]ltim/i.test(txt);const model=busca?"groq/compound-mini":complexidade(txt)>=3?POTENTE:LEVE;const t0=performance.now();
   const frases=["Um instante.","Processando.","Só um segundo."];
@@ -377,13 +384,13 @@ async function enviar(txt){txt=(txt||"").trim().slice(0,2000);if(!txt||ocupado)r
     const {limpo,acoes}=extrairAcoes(resp);const fala=limpo||"Feito.";
     HIST.push({role:"assistant",content:resp});ls.set("sx_hist",HIST.slice(-40));TURNOS++;hud();
     legenda(txt,fala);const b=bolha("a",fala,(KEY?"turbo":"grátis")+" · "+(ms/1000).toFixed(1)+" s");acoes.forEach(a=>executar(a,b));
-    ocupado=false;falar(fala,()=>{estado("");ultimo=Date.now();if(AO_VIVO)setTimeout(ouvirVivo,300)})}
-  catch(e){HIST.pop();ocupado=false;estado("erro");const m="Tive um problema: "+e.message+".";legenda(txt,m);bolha("a","⚠ "+m);falar(m,()=>{estado("");if(AO_VIVO)setTimeout(ouvirVivo,800)})}}
+    ocupado=false;falar(fala,()=>{estado("");ultimo=Date.now();if(PEND){const p=PEND;PEND=null;enviar(p)}else if(AO_VIVO)setTimeout(ouvirVivo,300)})}
+  catch(e){HIST.pop();ocupado=false;PEND=null;estado("erro");const m="Tive um problema: "+e.message+".";legenda(txt,m);bolha("a","⚠ "+m);falar(m,()=>{estado("");if(AO_VIVO)setTimeout(ouvirVivo,800)})}}
 
 // ---------- escuta mãos livres ----------
 // Depois do 1º toque (exigência do navegador), ela fica ouvindo sempre.
 // Em espera ela só reage quando você diz "oi", "olá", "e aí", "ei Sexta"... Depois disso a conversa flui sem palavra mágica até 40 s de silêncio.
-let AO_VIVO=ls.get("sx_escuta",true),rec=null,ACORDADA=false,ultimo=0,ativado=false,ouvindoAgora=false;
+let pausaAte=0;let AO_VIVO=ls.get("sx_escuta",true),rec=null,ACORDADA=false,ultimo=0,ativado=false,ouvindoAgora=false;
 const WAKE=/^\s*(?:(?:oi+|ol[aá]|e a[ií]|ei|hey|ok|fala|al[oô]|bom dia|boa tarde|boa noite)\b[\s,!.]*)?(?:sexta(?:-feira)?\b)?[\s,!.]*/i;
 const TEM_WAKE=/^\s*(oi+|ol[aá]|e a[ií]|ei|hey|fala|al[oô]|bom dia|boa tarde|boa noite)\b|\bsexta\b/i;
 const RESP_OI=()=>{const n=NOME||TRAT;const o=["Oi"+(n?", "+n:"")+". Tô ouvindo.","Às ordens"+(n?", "+n:"")+".","Pode falar"+(n?", "+n:"")+".","Aqui"+(n?", "+n:"")+". Manda."];return o[Math.random()*o.length|0]};
@@ -396,14 +403,14 @@ function tratar(t){t=(t||"").trim();if(!t)return false;const agora=Date.now();
   if(resto.split(/\s+/).length<2&&resto.length<12){const r=RESP_OI();legenda(t,r);falar(r,()=>{estado("");retomar()});return true}
   enviar(resto);return true}
 function retomar(){if(AO_VIVO&&ativado)setTimeout(loopEscuta,250)}
-function loopEscuta(){if(!AO_VIVO||!ativado||ocupado||ouvindoAgora||document.body.classList.contains("falando")||document.hidden)return;
+function loopEscuta(){if(digitando||Date.now()<pausaAte||!AO_VIVO||!ativado||ocupado||ouvindoAgora||document.body.classList.contains("falando")||document.hidden)return;
   if(ACORDADA&&Date.now()-ultimo>40000)dormir();
   escutar(t=>{if(!tratar(t))retomar()},retomar,true)}
 function escutar(onTexto,onVazio,silencioso){if(!SR){legenda("","Seu navegador não reconhece voz. Abra no Google Chrome.");return}
   try{rec&&rec.abort()}catch(e){}rec=new SR();rec.lang="pt-BR";rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;let final="",parcial="",feito=false;ouvindoAgora=true;
   rec.onstart=()=>{if(!silencioso||ACORDADA){estado("ouvindo");alvo=.2}else estado("","diga oi")};
   rec.onresult=e=>{let tt="";for(const r of e.results){tt+=r[0].transcript;if(r.isFinal)final=tt}parcial=tt;alvo=.5+Math.random()*.4;if(!silencioso||ACORDADA||TEM_WAKE.test(tt)){estado("ouvindo");legenda(tt,"")}};
-  rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){AO_VIVO=false;ls.set("sx_escuta",false);rotuloLive();legenda("","Preciso do microfone. Libere nas permissões do Chrome para este site.");estado("erro")}};
+  rec.onerror=e=>{if(e.error==="network"||e.error==="audio-capture")pausaAte=Date.now()+5000;if(e.error==="not-allowed"||e.error==="service-not-allowed"){AO_VIVO=false;ls.set("sx_escuta",false);rotuloLive();legenda("","Preciso do microfone. Libere nas permissões do Chrome para este site.");estado("erro")}};
   rec.onend=()=>{ouvindoAgora=false;alvo=0;if(feito)return;feito=true;const f=(final||parcial).trim();if(f)onTexto(f);else{if(!ACORDADA)estado("","diga oi");onVazio&&onVazio()}};
   try{rec.start()}catch(e){ouvindoAgora=false;setTimeout(()=>onVazio&&onVazio(),600)}}
 function ouvirVivo(){retomar()}
@@ -415,7 +422,7 @@ setInterval(()=>{if(AO_VIVO&&ativado&&!ouvindoAgora&&!ocupado&&!document.body.cl
 
 // ---------- estúdio: imagem, app, vídeo ----------
 const est=$("est");$("estX").onclick=()=>{est.classList.remove("on");pararVideo&&pararVideo()};
-function estudio(t){$("estTit").textContent=t;$("estBody").innerHTML="";$("estBtns").innerHTML="";$("estSt").textContent="";est.classList.add("on")}
+function estudio(t){$("estBody").querySelectorAll("img[src^=blob]").forEach(i=>{try{URL.revokeObjectURL(i.src)}catch(e){}});$("estTit").textContent=t;$("estBody").innerHTML="";$("estBtns").innerHTML="";$("estSt").textContent="";est.classList.add("on")}
 function estStatus(t){$("estSt").textContent=t}
 function estBtn(rot,fn,prim){const b=document.createElement("button");b.className="btn"+(prim?" p":"");b.textContent=rot;b.onclick=fn;$("estBtns").appendChild(b);return b}
 function baixar(blobOuUrl,nome){const a=document.createElement("a");a.href=typeof blobOuUrl==="string"?blobOuUrl:URL.createObjectURL(blobOuUrl);a.download=nome;document.body.appendChild(a);a.click();a.remove()}
@@ -424,7 +431,7 @@ async function gerarImg(prompt,w,h,rotulo){prompt=String(prompt||"").slice(0,900
   for(let i=0;i<8;i++){const u="https://image.pollinations.ai/prompt/"+encodeURIComponent(prompt)+"?width="+w+"&height="+h+"&nologo=true&enhance=true&seed="+(Math.random()*1e9|0)+"&referrer=sexta-ia";
     estStatus((rotulo||"Gerando imagem")+"…");let r;try{r=await fetch(u,{referrerPolicy:"no-referrer"})}catch(e){await espera(3000);continue}
     if(r.ok&&/image/.test(r.headers.get("content-type")||""))return URL.createObjectURL(await r.blob());
-    let s=12;try{const tx=await r.text();const m=tx.match(/(?:after|wait)\s+(\d+)/i);if(m)s=+m[1]+1}catch(e){}
+    let s=12;const ra=+r.headers.get("retry-after");if(ra>0&&ra<120)s=ra+1;try{const tx=await r.text();const m=tx.match(/(?:after|wait)\s+(\d+)/i);if(m)s=+m[1]+1}catch(e){}
     await contagem(Math.min(s,60),k=>(rotulo||"Imagem")+": servidor grátis libera em "+k+" s")}
   throw new Error("o gerador de imagens está ocupado")}
 const FORM={quadrado:[1024,1024],retrato:[768,1344],paisagem:[1344,768]};
@@ -467,6 +474,7 @@ async function criarVideo(a){estudio("VÍDEO");const n=Math.max(3,Math.min(10,+a
     if(recd){await new Promise(r=>{recd.onstop=r;recd.stop()});baixar(new Blob(chunks,{type:"video/webm"}),"sexta-video.webm");estStatus("Vídeo baixado (com legendas; a narração toca só no app).")}};
   estBtn("▶ Assistir com narração",()=>tocar(false),true);estBtn("Baixar vídeo",()=>{estStatus("Gravando o vídeo, espere terminar…");tocar(true)});addBotao("Ver vídeo",()=>est.classList.add("on"))}
 
+let digitando=false;$("in").addEventListener("focus",()=>{digitando=true;try{rec&&rec.abort()}catch(e){}});$("in").addEventListener("blur",()=>{digitando=false;setTimeout(retomar,400)});
 $("bot").onsubmit=e=>{e.preventDefault();const v=$("in").value;$("in").value="";$("in").blur();enviar(v)};
 
 
@@ -538,6 +546,7 @@ ticker();setInterval(ticker,38000);
 aplicarTema(TEMA);
 
 // ---------- inicialização ----------
+(function(){const l=ls.get("sx_alarmes",[]);const agora=Date.now();const vivos=l.filter(o=>o.q>agora-3600000);ls.set("sx_alarmes",vivos);vivos.forEach(o=>{if(o.q<=agora){o.t=o.t+" (perdido enquanto o app estava fechado)"}armar(o)})})();
 HIST.slice(-12).forEach(m=>{const {limpo}=extrairAcoes(m.content);bolha(m.role==="user"?"u":"a",limpo||"Feito.")});
 const msgsBoot=["CALIBRANDO SENSORES","CARREGANDO NÚCLEO","SISTEMAS ONLINE"];let bi=0;const biv=setInterval(()=>{$("bootTxt").textContent=msgsBoot[Math.min(bi++,2)]},450);
 const LOGB=["> kernel neural ......... ok","> síntese de voz pt-BR ... "+(("speechSynthesis" in window)?"ok":"ausente"),"> reconhecimento de voz . "+(SR?"ok":"use o Chrome"),"> política CSP .......... ativa","> sandbox de apps ....... ativa","> estúdio criativo ...... ok","> memória local ......... "+NOTAS.length+" notas","> link "+(KEY?"turbo groq":"grátis")+" ......... ok","> toque para ativar_"];
