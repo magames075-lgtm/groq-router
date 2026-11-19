@@ -245,11 +245,11 @@ function extrairAcoes(t){const acoes=[];const limpo=t.replace(/\[\[ACAO\s*(\{[\s
 // ---------- IA ----------
 const espera=ms=>new Promise(r=>setTimeout(r,ms));
 function complexidade(t){let s=0;const x=t.toLowerCase();if(t.length>220)s+=2;if(t.length>600)s+=2;["analise","explique","compare","código","codigo","script","passo a passo","estratégia","plano","redija","resuma","calcule","otimiz"].forEach(w=>{if(x.includes(w))s+=2});return s}
-async function groq(model,msgs){let r;try{r=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+KEY},body:JSON.stringify({model,messages:msgs,temperature:.7,max_tokens:900,reasoning_effort:"low"})})}catch(e){throw new Error("sem conexão")}
+async function groq(model,msgs){let r;try{r=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+KEY},body:JSON.stringify(model.startsWith("groq/")?{model,messages:msgs,temperature:.6,max_tokens:700}:{model,messages:msgs,temperature:.7,max_tokens:900,reasoning_effort:"low"})})}catch(e){throw new Error("sem conexão")}
   let j={};try{j=await r.json()}catch(e){}if(!r.ok){if(j.error?.code==="invalid_api_key")throw new Error("chave Groq inválida");throw new Error(j.error?.message||"erro "+r.status)}return (j.choices?.[0]?.message?.content||"").trim()}
 async function gratis(msgs,fila){for(let i=0;i<8;i++){let r;
     try{r=await fetch("https://text.pollinations.ai/openai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"openai",messages:msgs,referrer:"sexta-ia"})})}catch(e){if(i>2)throw new Error("sem conexão com a internet");await espera(2000);continue}
-    if(r.status===402||r.status===429||r.status>=500){fila&&fila(i);await espera(4000+i*1500);continue}
+    if(r.status===402||r.status===429||r.status>=500){let w=4000+i*1500;try{const tx=await r.text();const m=tx.match(/wait (\d+) sec/);if(m)w=(+m[1]+1)*1000}catch(e){}fila&&fila(i,Math.round(w/1000));await espera(w);continue}
     let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error?.message||"erro "+r.status);
     const c=(j.choices?.[0]?.message?.content||"").trim();if(c)return c;await espera(1500)}
   throw new Error("servidores ocupados agora, tenta de novo em um minuto")}
@@ -258,9 +258,9 @@ async function responder(model,msgs,fila){if(KEY){try{return await groq(model,ms
 let ocupado=false;
 async function enviar(txt){txt=(txt||"").trim();if(!txt||ocupado)return;ocupado=true;calar();limparAcoes();
   legenda(txt,"…");estado("pensando");bolha("u",txt);HIST.push({role:"user",content:txt});
-  const model=complexidade(txt)>=3?POTENTE:LEVE;const t0=performance.now();
+  const busca=/pesquis|procur|not[ií]cia|hoje|agora|atual|pre[cç]o|cota[cç]|quem ganhou|placar|resultado|clima|previs|lan[cç]a|quanto (custa|t[aá])|d[oó]lar|bitcoin|jogo d|[uú]ltim/i.test(txt);const model=busca?"groq/compound-mini":complexidade(txt)>=3?POTENTE:LEVE;const t0=performance.now();
   const frases=["Um instante.","Processando.","Só um segundo."];
-  const fila=i=>{legenda(txt,i<1?"Conectando aos servidores…":"Servidor ocupado, aguardando a vez…")};
+  const fila=(i,seg)=>{legenda(txt,"Servidor grátis liberado em "+(seg||5)+" s. Com a chave Groq nos ajustes isso some.")};
   try{const resp=await responder(model,[{role:"system",content:sistema()},...HIST.slice(-16)],fila);
     const ms=Math.round(performance.now()-t0);$("lat").textContent=(ms/1000).toFixed(1)+"s";$("b3").style.transform="scaleX("+Math.max(.08,1-ms/15000)+")";
     const {limpo,acoes}=extrairAcoes(resp);const fala=limpo||"Feito.";
