@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#01060c">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src https://api.groq.com https://text.pollinations.ai https://image.pollinations.ai; img-src 'self' data: blob: https://image.pollinations.ai; media-src 'self' blob: data:; frame-src blob: data: about:; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self' blob:">
+<meta name="referrer" content="no-referrer">
 <title>SEXTA · Sistema</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg">
@@ -53,6 +55,15 @@ body.erro #core{filter:hue-rotate(160deg) saturate(2)}
 #in:focus{border-color:var(--c)}
 #live{width:92px;padding:0;font:700 11px system-ui;letter-spacing:1.5px}
 #live.on{background:var(--c);color:#001018;border-color:var(--c)}
+/* estúdio */
+#est{position:fixed;inset:0;background:rgba(1,6,12,.98);z-index:6;display:none;flex-direction:column}
+#est.on{display:flex}
+#est header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;color:var(--c);letter-spacing:3px;font-size:12px;border-bottom:1px solid var(--dim)}
+#estBody{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px}
+#estBody img,#estBody canvas,#estBody video{max-width:100%;max-height:70vh;border:1px solid var(--dim);box-shadow:0 0 30px rgba(63,217,255,.25)}
+#estBody iframe{width:100%;flex:1;min-height:70vh;border:1px solid var(--dim);background:#fff}
+#estSt{font:14px system-ui;color:var(--c);text-align:center;white-space:pre-wrap}
+#estBtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
 /* histórico */
 #hist{position:fixed;inset:0;background:rgba(1,6,12,.97);z-index:5;display:none;flex-direction:column}
 #hist.on{display:flex}
@@ -78,7 +89,7 @@ small{opacity:.7}
 </head>
 <body>
 <div class="grid"></div>
-<div id="boot"><b>S.E.X.T.A.</b><span id="bootTxt">INICIALIZANDO SISTEMAS</span><span class="mu" style="font-size:10px">toque para ativar</span></div>
+<div id="boot"><b>S.E.X.T.A.</b><span id="bootTxt">INICIALIZANDO SISTEMAS</span><span class="mu" style="font-size:10px">toque uma vez para ativar · depois é só dizer "oi"</span></div>
 
 <div id="top">
   <div class="blk"><b>SEXTA</b><span class="mu">sistema pessoal · v3</span></div>
@@ -116,15 +127,17 @@ small{opacity:.7}
   </div>
 </div>
 
-<div id="sub"><span class="voce"></span><span id="fala">Toque no núcleo para conversar.</span></div>
+<div id="sub"><span class="voce"></span><span id="fala">Diga "oi" para começar.</span></div>
 <div id="acoes"></div>
 
 <form id="bot">
   <button type="button" class="hb" id="btnHist" title="Histórico">☰</button>
   <input id="in" placeholder="Digite..." autocomplete="off">
-  <button type="button" class="hb" id="live">AO VIVO</button>
+  <button type="button" class="hb on" id="live">OUVINDO</button>
   <button type="button" class="hb" id="btnCfg" title="Ajustes">⚙</button>
 </form>
+
+<div id="est"><header><span id="estTit">ESTÚDIO</span><button class="btn" id="estX">✕</button></header><div id="estBody"></div><div id="estSt"></div><div id="estBtns"></div></div>
 
 <div id="hist"><header><span>REGISTRO DA SESSÃO</span><span><button class="btn" onclick="limpar()">LIMPAR</button> <button class="btn" onclick="hist.classList.remove('on')">✕</button></span></header><div id="log"></div></div>
 
@@ -209,7 +222,11 @@ Tipos:
 - {"tipo":"nota_listar"}
 - {"tipo":"nota_apagar","indice":N} (N começa em 1; 0 apaga todas)
 - {"tipo":"copiar","texto":"..."}
-Use ação sempre que for algo para FAZER. Nunca diga que fez algo fora dessa lista; se for impossível (mexer em configurações do celular, comprar, ler arquivos), diga com naturalidade e ofereça o mais próximo.`;
+- {"tipo":"imagem","prompt":"descrição visual MUITO detalhada em inglês","formato":"quadrado|retrato|paisagem"} cria uma imagem
+- {"tipo":"app","descricao":"o que o app faz, telas, funções, estilo, bem detalhado"} cria um aplicativo web funcional na hora
+- {"tipo":"video","tema":"roteiro ou assunto","cenas":N} cria um vídeo narrado com imagens geradas (N de 3 a 10; cada cena dura uns 8 a 12 segundos)
+Para imagem, app ou vídeo, responda só uma frase curta tipo "Gerando agora" e coloque a ação.
+Use ação sempre que for algo para FAZER. Nunca diga que fez algo fora dessa lista; se for impossível (mexer em configurações do celular, comprar, ler arquivos, filmar vídeo realista tipo cinema), diga com naturalidade e ofereça o mais próximo.`;
 function sistema(){const agora=new Date().toLocaleString("pt-BR",{dateStyle:"full",timeStyle:"short"});const quem=NOME||"o usuário";
   return `Você é SEXTA, a inteligência artificial pessoal de ${quem}, no estilo do J.A.R.V.I.S. e da F.R.I.D.A.Y. dos filmes do Homem de Ferro e dos Vingadores.
 Personalidade: fala como gente de verdade, numa conversa por voz. Elegante, leal, calma, com humor seco e ironia leve, às vezes um comentário espirituoso. ${TRAT?`Trate a pessoa por "${TRAT}" de vez em quando, sem exagero.`:""} Use português do Brasil natural, com contrações ("tá", "pra") quando soar bem.
@@ -224,7 +241,7 @@ function pedirNotif(){try{"Notification" in window&&Notification.permission==="d
 
 function executar(a,bol){const enc=encodeURIComponent;let url=null,rot=null;const meta=t=>{addInfo(t);bol&&(bol.querySelector(".meta")||bol).appendChild(document.createTextNode("\n"+t))};
   switch(a.tipo){
-    case"abrir":url=a.url;rot="Abrir site";break;
+    case"abrir":url=/^https:\/\//i.test(a.url||"")?a.url:null;rot="Abrir site";break;
     case"pesquisar":url="https://www.google.com/search?q="+enc(a.q||"");rot="Ver pesquisa";break;
     case"youtube":url="https://www.youtube.com/results?search_query="+enc(a.q||"");rot="Abrir YouTube";break;
     case"mapa":url="https://www.google.com/maps/dir/?api=1&destination="+enc(a.destino||"");rot="Abrir rota";break;
@@ -238,6 +255,9 @@ function executar(a,bol){const enc=encodeURIComponent;let url=null,rot=null;cons
     case"nota_listar":meta(NOTAS.length?NOTAS.map((n,i)=>(i+1)+". "+n).join("\n"):"Nenhuma nota.");return;
     case"nota_apagar":{const i=+a.indice;if(i===0)NOTAS=[];else if(i>=1&&i<=NOTAS.length)NOTAS.splice(i-1,1);ls.set("sx_notas",NOTAS);hud();meta("🗑 notas: "+NOTAS.length);return}
     case"copiar":try{navigator.clipboard.writeText(a.texto||"");meta("📋 copiado")}catch(e){addBotao("Copiar",()=>navigator.clipboard.writeText(a.texto||""))}return;
+    case"imagem":criarImagem(a);return;
+    case"app":criarApp(a);return;
+    case"video":criarVideo(a);return;
     default:return}
   if(url&&/^(https?:|mailto:|tel:)/.test(url)){addBotao(rot,()=>window.open(url,"_blank"));if(AUTO&&/^https?:/.test(url))try{window.open(url,"_blank")}catch(e){}}}
 function extrairAcoes(t){const acoes=[];const limpo=t.replace(/\[\[ACAO\s*(\{[\s\S]*?\})\s*\]\]/g,(m,j)=>{try{acoes.push(JSON.parse(j))}catch(e){}return""}).replace(/[*#`]/g,"").trim();return{limpo,acoes}}
@@ -245,18 +265,18 @@ function extrairAcoes(t){const acoes=[];const limpo=t.replace(/\[\[ACAO\s*(\{[\s
 // ---------- IA ----------
 const espera=ms=>new Promise(r=>setTimeout(r,ms));
 function complexidade(t){let s=0;const x=t.toLowerCase();if(t.length>220)s+=2;if(t.length>600)s+=2;["analise","explique","compare","código","codigo","script","passo a passo","estratégia","plano","redija","resuma","calcule","otimiz"].forEach(w=>{if(x.includes(w))s+=2});return s}
-async function groq(model,msgs){let r;try{r=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+KEY},body:JSON.stringify(model.startsWith("groq/")?{model,messages:msgs,temperature:.6,max_tokens:700}:{model,messages:msgs,temperature:.7,max_tokens:900,reasoning_effort:"low"})})}catch(e){throw new Error("sem conexão")}
+async function groq(model,msgs,maxTok){let r;try{r=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+KEY},body:JSON.stringify(model.startsWith("groq/")?{model,messages:msgs,temperature:.6,max_tokens:maxTok||700}:{model,messages:msgs,temperature:.7,max_tokens:maxTok||900,reasoning_effort:"low"})})}catch(e){throw new Error("sem conexão")}
   let j={};try{j=await r.json()}catch(e){}if(!r.ok){if(j.error?.code==="invalid_api_key")throw new Error("chave Groq inválida");throw new Error(j.error?.message||"erro "+r.status)}return (j.choices?.[0]?.message?.content||"").trim()}
 async function gratis(msgs,fila){for(let i=0;i<8;i++){let r;
     try{r=await fetch("https://text.pollinations.ai/openai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"openai",messages:msgs,referrer:"sexta-ia"})})}catch(e){if(i>2)throw new Error("sem conexão com a internet");await espera(2000);continue}
-    if(r.status===402||r.status===429||r.status>=500){let w=4000+i*1500;try{const tx=await r.text();const m=tx.match(/wait (\d+) sec/);if(m)w=(+m[1]+1)*1000}catch(e){}fila&&fila(i,Math.round(w/1000));await espera(w);continue}
+    if(r.status===402||r.status===429||r.status>=500){let w=4000+i*1500;try{const tx=await r.text();const m=tx.match(/(?:wait|after)\s+(\d+)/i);if(m)w=(+m[1]+1)*1000}catch(e){}fila&&fila(i,Math.round(w/1000));await espera(w);continue}
     let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error?.message||"erro "+r.status);
     const c=(j.choices?.[0]?.message?.content||"").trim();if(c)return c;await espera(1500)}
   throw new Error("servidores ocupados agora, tenta de novo em um minuto")}
-async function responder(model,msgs,fila){if(KEY){try{return await groq(model,msgs)}catch(e){}}return await gratis(msgs,fila)}
+async function responder(model,msgs,fila,maxTok){if(KEY){try{return await groq(model,msgs,maxTok)}catch(e){}}return await gratis(msgs,fila)}
 
 let ocupado=false;
-async function enviar(txt){txt=(txt||"").trim();if(!txt||ocupado)return;ocupado=true;calar();limparAcoes();
+async function enviar(txt){txt=(txt||"").trim().slice(0,2000);if(!txt||ocupado)return;ocupado=true;calar();limparAcoes();
   legenda(txt,"…");estado("pensando");bolha("u",txt);HIST.push({role:"user",content:txt});
   const busca=/pesquis|procur|not[ií]cia|hoje|agora|atual|pre[cç]o|cota[cç]|quem ganhou|placar|resultado|clima|previs|lan[cç]a|quanto (custa|t[aá])|d[oó]lar|bitcoin|jogo d|[uú]ltim/i.test(txt);const model=busca?"groq/compound-mini":complexidade(txt)>=3?POTENTE:LEVE;const t0=performance.now();
   const frases=["Um instante.","Processando.","Só um segundo."];
@@ -266,30 +286,103 @@ async function enviar(txt){txt=(txt||"").trim();if(!txt||ocupado)return;ocupado=
     const {limpo,acoes}=extrairAcoes(resp);const fala=limpo||"Feito.";
     HIST.push({role:"assistant",content:resp});ls.set("sx_hist",HIST.slice(-40));TURNOS++;hud();
     legenda(txt,fala);const b=bolha("a",fala,(KEY?"turbo":"grátis")+" · "+(ms/1000).toFixed(1)+" s");acoes.forEach(a=>executar(a,b));
-    ocupado=false;falar(fala,()=>{estado("");if(AO_VIVO)setTimeout(ouvirVivo,300)})}
+    ocupado=false;falar(fala,()=>{estado("");ultimo=Date.now();if(AO_VIVO)setTimeout(ouvirVivo,300)})}
   catch(e){HIST.pop();ocupado=false;estado("erro");const m="Tive um problema: "+e.message+".";legenda(txt,m);bolha("a","⚠ "+m);falar(m,()=>{estado("");if(AO_VIVO)setTimeout(ouvirVivo,800)})}}
 
-// ---------- escuta ----------
-let AO_VIVO=false,rec=null;
-function ouvir(depois){if(!SR){legenda("","Seu navegador não reconhece voz. Abra no Google Chrome.");return}
-  try{rec&&rec.abort()}catch(e){}calar();rec=new SR();rec.lang="pt-BR";rec.interimResults=true;rec.continuous=false;let final="",parcial="";
-  rec.onstart=()=>{estado("ouvindo");alvo=.25;legenda("","Ouvindo…")};
-  rec.onresult=e=>{let tt="";for(const r of e.results){tt+=r[0].transcript;if(r.isFinal)final=tt}parcial=tt;alvo=.5+Math.random()*.4;legenda(tt,"")};
-  rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){AO_VIVO=false;$("live").classList.remove("on");legenda("","Preciso do microfone. Libere nas permissões do Chrome para este site.");estado("erro")}};
-  rec.onend=()=>{alvo=0;const f=final||parcial;if(f){enviar(f)}else{estado("");depois&&depois()}};
-  try{rec.start()}catch(e){setTimeout(()=>ouvir(depois),500)}}
-function ouvirVivo(){if(AO_VIVO&&!ocupado)ouvir(()=>AO_VIVO&&setTimeout(ouvirVivo,250))}
-function iniciarVivo(){AO_VIVO=true;$("live").classList.add("on");$("live").textContent="ENCERRAR";ouvirVivo()}
-function pararVivo(){AO_VIVO=false;$("live").classList.remove("on");$("live").textContent="AO VIVO";try{rec&&rec.abort()}catch(e){}calar();estado("");legenda("","Conversa encerrada. Toque no núcleo quando precisar.")}
-$("live").onclick=()=>AO_VIVO?pararVivo():iniciarVivo();
-$("reactor").onclick=()=>{if(document.body.classList.contains("falando")){calar();estado("");if(AO_VIVO)ouvirVivo();return}if(AO_VIVO)return;ouvir()};
+// ---------- escuta mãos livres ----------
+// Depois do 1º toque (exigência do navegador), ela fica ouvindo sempre.
+// Em espera ela só reage quando você diz "oi", "olá", "e aí", "ei Sexta"... Depois disso a conversa flui sem palavra mágica até 40 s de silêncio.
+let AO_VIVO=ls.get("sx_escuta",true),rec=null,ACORDADA=false,ultimo=0,ativado=false,ouvindoAgora=false;
+const WAKE=/^\s*(?:(?:oi+|ol[aá]|e a[ií]|ei|hey|ok|fala|al[oô]|bom dia|boa tarde|boa noite)\b[\s,!.]*)?(?:sexta(?:-feira)?\b)?[\s,!.]*/i;
+const TEM_WAKE=/^\s*(oi+|ol[aá]|e a[ií]|ei|hey|fala|al[oô]|bom dia|boa tarde|boa noite)\b|\bsexta\b/i;
+const RESP_OI=()=>{const n=NOME||TRAT;const o=["Oi"+(n?", "+n:"")+". Tô ouvindo.","Às ordens"+(n?", "+n:"")+".","Pode falar"+(n?", "+n:"")+".","Aqui"+(n?", "+n:"")+". Manda."];return o[Math.random()*o.length|0]};
+function rotuloLive(){$("live").classList.toggle("on",AO_VIVO);$("live").textContent=AO_VIVO?"OUVINDO":"MUDO"}
+function dormir(){ACORDADA=false;if(!ocupado&&!document.body.classList.contains("falando"))estado("","diga oi")}
+function tratar(t){t=(t||"").trim();if(!t)return false;const agora=Date.now();
+  if(ACORDADA&&agora-ultimo<40000){ultimo=agora;enviar(t.replace(WAKE,"").trim()||t);return true}
+  if(!TEM_WAKE.test(t))return false;
+  ACORDADA=true;ultimo=agora;const resto=t.replace(WAKE,"").trim();
+  if(resto.split(/\s+/).length<2&&resto.length<12){const r=RESP_OI();legenda(t,r);falar(r,()=>{estado("");retomar()});return true}
+  enviar(resto);return true}
+function retomar(){if(AO_VIVO&&ativado)setTimeout(loopEscuta,250)}
+function loopEscuta(){if(!AO_VIVO||!ativado||ocupado||ouvindoAgora||document.body.classList.contains("falando")||document.hidden)return;
+  if(ACORDADA&&Date.now()-ultimo>40000)dormir();
+  escutar(t=>{if(!tratar(t))retomar()},retomar,true)}
+function escutar(onTexto,onVazio,silencioso){if(!SR){legenda("","Seu navegador não reconhece voz. Abra no Google Chrome.");return}
+  try{rec&&rec.abort()}catch(e){}rec=new SR();rec.lang="pt-BR";rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;let final="",parcial="",feito=false;ouvindoAgora=true;
+  rec.onstart=()=>{if(!silencioso||ACORDADA){estado("ouvindo");alvo=.2}else estado("","diga oi")};
+  rec.onresult=e=>{let tt="";for(const r of e.results){tt+=r[0].transcript;if(r.isFinal)final=tt}parcial=tt;alvo=.5+Math.random()*.4;if(!silencioso||ACORDADA||TEM_WAKE.test(tt)){estado("ouvindo");legenda(tt,"")}};
+  rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){AO_VIVO=false;ls.set("sx_escuta",false);rotuloLive();legenda("","Preciso do microfone. Libere nas permissões do Chrome para este site.");estado("erro")}};
+  rec.onend=()=>{ouvindoAgora=false;alvo=0;if(feito)return;feito=true;const f=(final||parcial).trim();if(f)onTexto(f);else{if(!ACORDADA)estado("","diga oi");onVazio&&onVazio()}};
+  try{rec.start()}catch(e){ouvindoAgora=false;setTimeout(()=>onVazio&&onVazio(),600)}}
+function ouvirVivo(){retomar()}
+function ouvir(){ACORDADA=true;ultimo=Date.now();escutar(t=>{ultimo=Date.now();enviar(t)},()=>{estado("");retomar()})}
+$("live").onclick=()=>{AO_VIVO=!AO_VIVO;ls.set("sx_escuta",AO_VIVO);rotuloLive();if(AO_VIVO){ativado=true;legenda("","Ouvindo. Diga oi quando quiser.");loopEscuta()}else{try{rec&&rec.abort()}catch(e){}calar();ACORDADA=false;estado("","mudo");legenda("","Microfone desligado. Toque em MUDO para voltar a ouvir.")}};
+$("reactor").onclick=()=>{if(document.body.classList.contains("falando")){calar();estado("");ACORDADA=true;ultimo=Date.now();retomar();return}try{rec&&rec.abort()}catch(e){}ouvindoAgora=false;ouvir()};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)retomar();else{try{rec&&rec.abort()}catch(e){}}});
+setInterval(()=>{if(AO_VIVO&&ativado&&!ouvindoAgora&&!ocupado&&!document.body.classList.contains("falando"))loopEscuta()},3000);
+
+// ---------- estúdio: imagem, app, vídeo ----------
+const est=$("est");$("estX").onclick=()=>{est.classList.remove("on");pararVideo&&pararVideo()};
+function estudio(t){$("estTit").textContent=t;$("estBody").innerHTML="";$("estBtns").innerHTML="";$("estSt").textContent="";est.classList.add("on")}
+function estStatus(t){$("estSt").textContent=t}
+function estBtn(rot,fn,prim){const b=document.createElement("button");b.className="btn"+(prim?" p":"");b.textContent=rot;b.onclick=fn;$("estBtns").appendChild(b);return b}
+function baixar(blobOuUrl,nome){const a=document.createElement("a");a.href=typeof blobOuUrl==="string"?blobOuUrl:URL.createObjectURL(blobOuUrl);a.download=nome;document.body.appendChild(a);a.click();a.remove()}
+async function contagem(seg,fmt){for(let k=seg;k>0;k--){estStatus(fmt(k));await espera(1000)}}
+async function gerarImg(prompt,w,h,rotulo){prompt=String(prompt||"").slice(0,900);
+  for(let i=0;i<8;i++){const u="https://image.pollinations.ai/prompt/"+encodeURIComponent(prompt)+"?width="+w+"&height="+h+"&nologo=true&enhance=true&seed="+(Math.random()*1e9|0)+"&referrer=sexta-ia";
+    estStatus((rotulo||"Gerando imagem")+"…");let r;try{r=await fetch(u,{referrerPolicy:"no-referrer"})}catch(e){await espera(3000);continue}
+    if(r.ok&&/image/.test(r.headers.get("content-type")||""))return URL.createObjectURL(await r.blob());
+    let s=12;try{const tx=await r.text();const m=tx.match(/(?:after|wait)\s+(\d+)/i);if(m)s=+m[1]+1}catch(e){}
+    await contagem(Math.min(s,60),k=>(rotulo||"Imagem")+": servidor grátis libera em "+k+" s")}
+  throw new Error("o gerador de imagens está ocupado")}
+const FORM={quadrado:[1024,1024],retrato:[768,1344],paisagem:[1344,768]};
+async function criarImagem(a){estudio("IMAGEM");const [w,h]=FORM[a.formato]||FORM.quadrado;
+  try{const url=await gerarImg(a.prompt,w,h,"Renderizando imagem");const img=new Image();img.src=url;img.alt=a.prompt||"";$("estBody").appendChild(img);estStatus("");
+    estBtn("Baixar",()=>baixar(url,"sexta-imagem.jpg"),true);estBtn("Outra versão",()=>criarImagem(a));addBotao("Ver imagem",()=>est.classList.add("on"))}
+  catch(e){estStatus("Falhou: "+e.message+". Tenta de novo em um minuto.")}}
+
+// apps: gerados num iframe isolado (sandbox sem acesso aos seus dados, chave ou notas)
+async function criarApp(a){estudio("APLICATIVO");estStatus("Projetando o app… pode levar até um minuto.");
+  const sys=`Você é um engenheiro front-end sênior. Crie UM aplicativo web completo em um único arquivo HTML (CSS e JS embutidos), sem bibliotecas nem recursos externos, sem fetch para internet. Mobile-first, visual moderno e caprichado, textos em português do Brasil, funcional de verdade, com dados salvos em memória (não use localStorage nem cookies). Responda SOMENTE com o código HTML, começando em <!doctype html>.`;
+  try{const r=await responder(POTENTE,[{role:"system",content:sys},{role:"user",content:String(a.descricao||"").slice(0,3000)}],(i,seg)=>estStatus("Servidor grátis libera em "+(seg||5)+" s…"),8000);
+    let html=(r.match(/```(?:html)?\s*([\s\S]*?)```/i)||[,r])[1].trim();const k=html.search(/<!doctype|<html/i);if(k>0)html=html.slice(k);
+    if(!/<html|<body|<div/i.test(html))throw new Error("o código veio incompleto");
+    const f=document.createElement("iframe");f.setAttribute("sandbox","allow-scripts allow-forms allow-modals");f.setAttribute("referrerpolicy","no-referrer");f.srcdoc=html;$("estBody").appendChild(f);estStatus("");
+    const apps=ls.get("sx_apps",[]);apps.unshift({d:a.descricao,h:html.slice(0,200000),t:Date.now()});ls.set("sx_apps",apps.slice(0,5));
+    estBtn("Baixar app (.html)",()=>baixar(new Blob([html],{type:"text/html"}),"app-sexta.html"),true);estBtn("Refazer",()=>criarApp(a));addBotao("Abrir app",()=>est.classList.add("on"))}
+  catch(e){estStatus("Falhou: "+e.message+".")}}
+
+// vídeo: roteiro + cenas geradas + narração + legenda, gravado em .webm
+let pararVideo=null;
+async function criarVideo(a){estudio("VÍDEO");const n=Math.max(3,Math.min(10,+a.cenas||5));estStatus("Escrevendo o roteiro…");
+  const sys=`Crie o roteiro de um vídeo curto narrado em português do Brasil. Responda SOMENTE com JSON válido no formato {"titulo":"...","cenas":[{"prompt":"descrição visual cinematográfica detalhada em inglês","fala":"narração da cena em português, 1 ou 2 frases"}]} com exatamente ${n} cenas, visual coerente entre elas.`;
+  let rot;try{const r=await responder(POTENTE,[{role:"system",content:sys},{role:"user",content:String(a.tema||"").slice(0,2000)}],(i,seg)=>estStatus("Roteiro: servidor libera em "+(seg||5)+" s…"),3000);
+    rot=JSON.parse((r.match(/\{[\s\S]*\}/)||["{}"])[0]);if(!rot.cenas||!rot.cenas.length)throw new Error("roteiro vazio")}catch(e){estStatus("Falhou no roteiro: "+e.message);return}
+  const cv=document.createElement("canvas");cv.width=720;cv.height=1280;const g=cv.getContext("2d");$("estBody").appendChild(cv);
+  g.fillStyle="#01060c";g.fillRect(0,0,720,1280);g.fillStyle="#3fd9ff";g.font="bold 40px system-ui";g.textAlign="center";g.fillText(rot.titulo||"",360,640);
+  const imgs=[];for(let i=0;i<rot.cenas.length;i++){try{const u=await gerarImg(rot.cenas[i].prompt,720,1280,"Cena "+(i+1)+" de "+rot.cenas.length);const im=new Image();im.src=u;await im.decode();imgs.push(im);
+      g.drawImage(im,0,0,720,1280)}catch(e){imgs.push(null)}}
+  estStatus("Pronto: "+(rot.titulo||"vídeo")+".");
+  const tocar=async gravar=>{let parar=false;pararVideo=()=>{parar=true;calar()};let recd=null,chunks=[];
+    if(gravar&&window.MediaRecorder){try{recd=new MediaRecorder(cv.captureStream(30),{mimeType:MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm"});recd.ondataavailable=e=>e.data.size&&chunks.push(e.data);recd.start(500)}catch(e){recd=null}}
+    for(let i=0;i<rot.cenas.length&&!parar;i++){const im=imgs[i],fala=rot.cenas[i].fala||"";let falando=true;const t0=performance.now();
+      if(!gravar)falar(fala,()=>{falando=false});else falando=false;const dur=Math.max(7000,fala.length*70);
+      await new Promise(res=>{const quadro=()=>{const el=performance.now()-t0;const p=Math.min(1,el/dur);const z=1+p*.12;g.fillStyle="#000";g.fillRect(0,0,720,1280);
+        if(im){const w=720*z,h=1280*z;g.globalAlpha=Math.min(1,el/600);g.drawImage(im,(720-w)/2+(i%2?-1:1)*p*20,(1280-h)/2,w,h);g.globalAlpha=1}
+        g.fillStyle="rgba(0,0,0,.55)";g.fillRect(0,1040,720,200);g.fillStyle="#fff";g.font="30px system-ui";g.textAlign="center";
+        const pal=fala.split(" ");let lin="",y=1090;for(const w of pal){if(g.measureText(lin+w).width>640){g.fillText(lin,360,y);y+=40;lin=""}lin+=w+" "}g.fillText(lin,360,y);
+        if(parar||(el>=dur&&!falando))return res();requestAnimationFrame(quadro)};quadro()})}
+    if(recd){await new Promise(r=>{recd.onstop=r;recd.stop()});baixar(new Blob(chunks,{type:"video/webm"}),"sexta-video.webm");estStatus("Vídeo baixado (com legendas; a narração toca só no app).")}};
+  estBtn("▶ Assistir com narração",()=>tocar(false),true);estBtn("Baixar vídeo",()=>{estStatus("Gravando o vídeo, espere terminar…");tocar(true)});addBotao("Ver vídeo",()=>est.classList.add("on"))}
+
 $("bot").onsubmit=e=>{e.preventDefault();const v=$("in").value;$("in").value="";$("in").blur();enviar(v)};
 
 // ---------- inicialização ----------
 HIST.slice(-12).forEach(m=>{const {limpo}=extrairAcoes(m.content);bolha(m.role==="user"?"u":"a",limpo||"Feito.")});
 const msgsBoot=["CALIBRANDO SENSORES","CARREGANDO NÚCLEO","SISTEMAS ONLINE"];let bi=0;const biv=setInterval(()=>{$("bootTxt").textContent=msgsBoot[Math.min(bi++,2)]},450);
-function saudacao(){const h=new Date().getHours();const p=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";const n=NOME?(", "+NOME):(TRAT?", "+TRAT:"");return p+n+". Sistemas online. Em que posso ajudar?"}
-$("boot").onclick=()=>{clearInterval(biv);$("boot").classList.add("fora");const s=saudacao();legenda("",s);falar(s,()=>estado(""))};
+function saudacao(){const h=new Date().getHours();const p=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";const n=NOME?(", "+NOME):(TRAT?", "+TRAT:"");return p+n+". Sistemas online. Tô ouvindo, é só falar."}
+$("boot").onclick=()=>{clearInterval(biv);$("boot").classList.add("fora");ativado=true;rotuloLive();const s=saudacao();ACORDADA=true;ultimo=Date.now();legenda("",s);falar(s,()=>{estado("");retomar()})};
 setTimeout(()=>{if(!$("boot").classList.contains("fora"))$("bootTxt").textContent="SISTEMAS ONLINE"},1500);
 </script>
 </body>
