@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#01060c">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src https://api.groq.com https://text.pollinations.ai https://image.pollinations.ai; img-src 'self' data: blob: https://image.pollinations.ai; media-src 'self' blob: data:; frame-src blob: data: about:; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self' blob:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src https://api.open-meteo.com https://api.groq.com https://text.pollinations.ai https://image.pollinations.ai; img-src 'self' data: blob: https://image.pollinations.ai; media-src 'self' blob: data:; frame-src blob: data: about:; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self' blob:">
 <meta name="referrer" content="no-referrer">
-<title>SEXTA · Sistema</title>
+<title>SEXTA · Sistema v5</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg">
 <style>
@@ -84,16 +84,70 @@ small{opacity:.7}
 #boot{position:fixed;inset:0;background:var(--bg);z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--c);letter-spacing:4px;font-size:12px;gap:10px;transition:opacity .6s}
 #boot b{font-size:26px;letter-spacing:10px;text-shadow:0 0 18px var(--c)}
 #boot.fora{opacity:0;pointer-events:none}
+
+/* ===== v5 futurista ===== */
+body[data-tema=stark]{--c:#ff4d5e;--c2:#ff9f1c;--dim:#4a1018;--tx:#ffe9ea}
+body[data-tema=ouro]{--c:#ffc94d;--c2:#ff8a00;--dim:#4a3608;--tx:#fff6e0}
+body[data-tema=matrix]{--c:#39ff88;--c2:#00c96b;--dim:#0b3d22;--tx:#e2ffef}
+body[data-tema=nebula]{--c:#c77dff;--c2:#7b2cff;--dim:#2e1250;--tx:#f4e8ff}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.scan{position:fixed;inset:0;pointer-events:none;z-index:1;background:linear-gradient(transparent 0,rgba(255,255,255,.035) 50%,transparent 100%);background-size:100% 220px;animation:scan 6s linear infinite;mix-blend-mode:screen}
+@keyframes scan{from{background-position:0 -220px}to{background-position:0 100vh}}
+.cn{position:fixed;width:22px;height:22px;border:2px solid var(--c);pointer-events:none;z-index:2;opacity:.7}
+.cn.a{top:6px;left:6px;border-right:0;border-bottom:0}.cn.b{top:6px;right:6px;border-left:0;border-bottom:0}
+.cn.c{bottom:6px;left:6px;border-right:0;border-top:0}.cn.d{bottom:6px;right:6px;border-left:0;border-top:0}
+#reactor svg g{stroke:var(--c)}
+#core{background:radial-gradient(circle,#fff 0,var(--c) 26%,var(--c2) 54%,transparent 74%);box-shadow:0 0 50px var(--c),0 0 120px var(--c)}
+#top .mid{text-align:center;font-size:9px;letter-spacing:3px;opacity:.75;padding-top:4px}
+#top .mid i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#5dffb1;box-shadow:0 0 8px #5dffb1;margin-right:5px;animation:pis 1.6s infinite}
+@keyframes pis{50%{opacity:.25}}
+#spark{display:block;width:80px;height:22px;margin:2px 0 6px}.side.rt #spark{margin-left:auto}
+.hex{display:inline-block;font-size:9px;border:1px solid var(--dim);padding:1px 5px;margin-top:4px;letter-spacing:1px}
+#radar{position:absolute;inset:-2%;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 300deg,color-mix(in srgb,var(--c) 30%,transparent) 360deg);animation:spin 4s linear infinite;mask:radial-gradient(circle,transparent 60%,#000 61%,#000 70%,transparent 71%);opacity:.6;pointer-events:none}
+#dock{display:flex;gap:6px;overflow-x:auto;padding:6px 12px 0;scrollbar-width:none;z-index:2}
+#dock::-webkit-scrollbar{display:none}
+#dock button{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:62px;padding:7px 6px;border:1px solid var(--dim);background:linear-gradient(180deg,color-mix(in srgb,var(--c) 14%,transparent),transparent);color:var(--c);font:600 10px system-ui;letter-spacing:1px;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+#dock button b{font-size:18px;font-weight:400}
+#dock button:active{background:var(--c);color:#000}
+#ticker{overflow:hidden;white-space:nowrap;font-size:10px;letter-spacing:2px;color:var(--c);opacity:.7;border-top:1px solid var(--dim);border-bottom:1px solid var(--dim);margin:6px 0 0;padding:3px 0;text-transform:uppercase}
+#ticker span{display:inline-block;padding-left:100%;animation:tick 38s linear infinite}
+@keyframes tick{to{transform:translateX(-100%)}}
+#bootLog{font:11px ui-monospace,monospace;color:var(--c);opacity:.8;min-height:120px;width:min(86vw,360px);white-space:pre;letter-spacing:1px;margin:0}
+#bootBar{width:min(70vw,280px);height:3px;background:var(--dim);overflow:hidden}#bootBar i{display:block;height:100%;width:0;background:var(--c);box-shadow:0 0 10px var(--c);transition:width .25s}
+#boot b{animation:gl 2.2s infinite}
+@keyframes gl{0%,92%,100%{transform:none;text-shadow:0 0 18px var(--c)}93%{transform:translateX(-3px);text-shadow:3px 0 #f0f,-3px 0 #0ff}96%{transform:translateX(2px)}}
+/* projetos */
+#proj{position:fixed;inset:0;background:rgba(1,6,12,.97);z-index:5;display:none;flex-direction:column}
+#proj.on{display:flex}
+#proj header{display:flex;justify-content:space-between;align-items:center;padding:14px;color:var(--c);letter-spacing:3px;font-size:13px;border-bottom:1px solid var(--dim)}
+#projTabs{display:flex;gap:6px;padding:10px 14px 0}
+#projTabs button{flex:1;border:1px solid var(--dim);background:none;color:var(--c);padding:8px 4px;font:600 11px system-ui;letter-spacing:1px}
+#projTabs button.on{background:var(--c);color:#000}
+#projList{flex:1;overflow:auto;padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start}
+.pc{border:1px solid var(--dim);background:color-mix(in srgb,var(--c) 6%,transparent);padding:8px;font:12px system-ui;color:var(--tx);display:flex;flex-direction:column;gap:6px;position:relative}
+.pc img{width:100%;aspect-ratio:1;object-fit:cover;border:1px solid var(--dim)}
+.pc .tt{font-weight:600;color:var(--c);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pc .dt{opacity:.55;font-size:10px}
+.pc .bb{display:flex;gap:4px}.pc .bb button{flex:1;border:1px solid var(--c);background:none;color:var(--c);padding:5px 0;font:11px system-ui}
+.vazio{grid-column:1/-1;text-align:center;opacity:.6;font:14px system-ui;padding:40px 0}
+/* criar */
+#criar textarea{width:100%;min-height:110px;padding:10px;margin:6px 0 10px;background:var(--bg);color:var(--tx);border:1px solid var(--dim);font:15px system-ui;resize:vertical}
+#criar .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+#criar .chips button{border:1px solid var(--dim);background:none;color:var(--c);padding:5px 9px;font:12px system-ui;border-radius:12px}
+select{width:100%;padding:10px;margin:6px 0 12px;background:var(--bg);color:var(--tx);border:1px solid var(--dim);font:inherit}
+
 @media(max-height:640px){#sub{font-size:16px;min-height:60px}.side{display:none}}
+@media(max-width:480px){#reactor{width:min(58vw,300px);margin-top:70px}.side{top:2%;font-size:9px;letter-spacing:1px;line-height:1.7}.bar{width:56px}#spark{width:60px;height:18px}#top .mid{font-size:8px;letter-spacing:2px}}
 </style>
 </head>
 <body>
-<div class="grid"></div>
-<div id="boot"><b>S.E.X.T.A.</b><span id="bootTxt">INICIALIZANDO SISTEMAS</span><span class="mu" style="font-size:10px">toque uma vez para ativar · depois é só dizer "oi"</span></div>
+<div class="grid"></div><canvas id="fx"></canvas><div class="scan"></div><div class="cn a"></div><div class="cn b"></div><div class="cn c"></div><div class="cn d"></div>
+<div id="boot"><b>S.E.X.T.A.</b><span id="bootTxt">INICIALIZANDO SISTEMAS</span><div id="bootBar"><i></i></div><pre id="bootLog"></pre><span class="mu" style="font-size:10px;letter-spacing:1.5px;text-align:center;padding:0 24px">toque uma vez para ativar<br>depois é só dizer "oi"</span></div>
 
 <div id="top">
-  <div class="blk"><b>SEXTA</b><span class="mu">sistema pessoal · v3</span></div>
-  <div class="blk r"><span id="hora" style="font-size:18px;letter-spacing:3px">--:--</span><br><span id="data" class="mu">--</span></div>
+  <div class="blk"><b>SEXTA</b><span class="mu" style="font-size:9px;white-space:nowrap">sistema · v5</span></div>
+  <div class="mid"><i></i><span id="stLink">LINK SEGURO</span><br><span class="hex" id="hexId">ID ----</span></div>
+  <div class="blk r"><span id="hora" style="font-size:18px;letter-spacing:3px">--:--</span><span id="seg" class="mu" style="font-size:11px">:--</span><br><span id="data" class="mu">--</span></div>
 </div>
 
 <div id="stage">
@@ -102,17 +156,21 @@ small{opacity:.7}
     <div>núcleo IA</div><div class="bar"><i id="b1"></i></div>
     <div>energia <span id="bat">--</span></div><div class="bar"><i id="b2"></i></div>
     <div>memória <span id="nNotas">0</span> notas</div>
+    <div>projetos <span id="nProj">0</span></div>
+    <div>clima <span id="clima">--</span></div>
   </div>
   <div class="side rt">
     <div>modo <span id="modo">grátis</span></div>
-    <div>latência <span id="lat">--</span></div><div class="bar"><i id="b3"></i></div>
+    <div>latência <span id="lat">--</span></div><canvas id="spark" width="160" height="44"></canvas>
     <div>voz <span id="vozSt">ativa</span></div>
     <div>sessão <span id="nTurnos">0</span></div>
+    <div>uptime <span id="up">00:00</span></div>
+    <div>tema <span id="temaSt">ciano</span></div>
   </div>
-  <div id="reactor" title="Toque para falar">
+  <div id="reactor" title="Toque para falar"><div id="radar"></div>
     <svg viewBox="0 0 200 200">
       <defs><filter id="gl"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-      <g fill="none" stroke="#3fd9ff" filter="url(#gl)">
+      <g fill="none" filter="url(#gl)">
         <circle class="ring r1" cx="100" cy="100" r="96" stroke-width=".6" stroke-dasharray="2 4" opacity=".7"/>
         <circle class="ring r3" cx="100" cy="100" r="88" stroke-width="3" stroke-dasharray="60 18 8 18" opacity=".55"/>
         <circle class="ring r2" cx="100" cy="100" r="78" stroke-width="1.2" stroke-dasharray="120 40" opacity=".9"/>
@@ -129,6 +187,17 @@ small{opacity:.7}
 
 <div id="sub"><span class="voce"></span><span id="fala">Diga "oi" para começar.</span></div>
 <div id="acoes"></div>
+<div id="dock">
+  <button data-k="imagem"><b>◈</b>imagem</button>
+  <button data-k="app"><b>⌬</b>app</button>
+  <button data-k="video"><b>▶</b>vídeo</button>
+  <button data-k="proj"><b>▦</b>projetos</button>
+  <button data-k="notas"><b>✎</b>notas</button>
+  <button data-k="clima"><b>☁</b>clima</button>
+  <button data-k="foco"><b>◷</b>foco 25</button>
+  <button data-k="tema"><b>◐</b>tema</button>
+</div>
+<div id="ticker"><span id="tickTxt">SEXTA ONLINE</span></div>
 
 <form id="bot">
   <button type="button" class="hb" id="btnHist" title="Histórico">☰</button>
@@ -139,6 +208,14 @@ small{opacity:.7}
 
 <div id="est"><header><span id="estTit">ESTÚDIO</span><button class="btn" id="estX">✕</button></header><div id="estBody"></div><div id="estSt"></div><div id="estBtns"></div></div>
 
+<div id="proj"><header><span>PROJETOS</span><button class="btn" onclick="proj.classList.remove('on')">✕</button></header>
+<div id="projTabs"><button data-t="apps" class="on">APPS</button><button data-t="imgs">IMAGENS</button><button data-t="vids">VÍDEOS</button></div>
+<div id="projList"></div></div>
+
+<dialog id="criar"><h3 id="crTit">CRIAR</h3><div class="chips" id="crChips"></div><textarea id="crTxt" placeholder="Descreva com detalhes..."></textarea>
+<div id="crFmt"><small>Formato</small><select id="crSel"><option value="quadrado">Quadrado</option><option value="retrato">Retrato (celular)</option><option value="paisagem">Paisagem</option></select></div>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="criar.close()">Cancelar</button><button class="btn p" id="crGo">Criar</button></div></dialog>
+
 <div id="hist"><header><span>REGISTRO DA SESSÃO</span><span><button class="btn" onclick="limpar()">LIMPAR</button> <button class="btn" onclick="hist.classList.remove('on')">✕</button></span></header><div id="log"></div></div>
 
 <dialog id="cfg">
@@ -147,6 +224,8 @@ small{opacity:.7}
   <input id="nome" placeholder="Ex.: Ma">
   <small>Tratamento</small>
   <input id="trat" placeholder="Ex.: senhor, chefe, ou deixe vazio">
+  <small>Tema visual</small>
+  <select id="tema"><option value="">Ciano (J.A.R.V.I.S.)</option><option value="stark">Vermelho Stark</option><option value="ouro">Ouro</option><option value="matrix">Matrix</option><option value="nebula">Nebulosa</option></select>
   <label class="ck"><input type="checkbox" id="autoAbrir" checked> Abrir links automaticamente</label>
   <small>Opcional: chave GroqCloud (gsk_) para respostas mais rápidas. Sem ela funciona normal.</small>
   <input id="key" type="password" placeholder="gsk_... (opcional)" autocomplete="off">
@@ -160,18 +239,22 @@ let KEY=ls.get("sx_key",""),NOME=ls.get("sx_nome",""),TRAT=ls.get("sx_trat","sen
 let HIST=ls.get("sx_hist",[]),NOTAS=ls.get("sx_notas",[]),TURNOS=0;
 const LEVE="openai/gpt-oss-20b",POTENTE="openai/gpt-oss-120b";
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const T0=Date.now();let TEMA=ls.get("sx_tema",""),LATS=ls.get("sx_lats",[]);
+const TEMAS={"":"ciano",stark:"stark",ouro:"ouro",matrix:"matrix",nebula:"nebula"};
+function aplicarTema(t){TEMA=t||"";ls.set("sx_tema",TEMA);document.body.dataset.tema=TEMA;const e=document.getElementById("temaSt");if(e)e.textContent=TEMAS[TEMA]||"ciano"}
+function corC(){return getComputedStyle(document.body).getPropertyValue("--c").trim()||"#3fd9ff"}
 
 // ---------- HUD ----------
-function relogio(){const d=new Date();$("hora").textContent=d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});$("data").textContent=d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"})}
+function relogio(){const d=new Date();$("hora").textContent=d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});$("seg").textContent=":"+String(d.getSeconds()).padStart(2,"0");const u=Math.floor((Date.now()-T0)/1000);$("up").textContent=String(Math.floor(u/60)).padStart(2,"0")+":"+String(u%60).padStart(2,"0");$("data").textContent=d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"})}
 setInterval(relogio,1000);relogio();
-function hud(){$("rede").textContent=navigator.onLine?"online":"offline";$("rede").className=navigator.onLine?"ok":"wa";$("modo").textContent=KEY?"turbo":"grátis";$("nNotas").textContent=NOTAS.length;$("nTurnos").textContent=TURNOS;$("b1").style.transform="scaleX("+(.55+Math.random()*.4)+")"}
+function hud(){$("rede").textContent=navigator.onLine?"online":"offline";$("rede").className=navigator.onLine?"ok":"wa";$("modo").textContent=KEY?"turbo":"grátis";$("nNotas").textContent=NOTAS.length;$("nTurnos").textContent=TURNOS;$("nProj").textContent=ls.get("sx_apps",[]).length+ls.get("sx_imgs",[]).length+ls.get("sx_vids",[]).length;$("b1").style.transform="scaleX("+(.55+Math.random()*.4)+")"}
 setInterval(hud,1500);hud();
 try{navigator.getBattery&&navigator.getBattery().then(b=>{const f=()=>{$("bat").textContent=Math.round(b.level*100)+"%";$("b2").style.transform="scaleX("+b.level+")"};f();b.onlevelchange=f})}catch(e){}
-function estado(c,txt){document.body.className=c||"";$("estado").textContent=txt||{ouvindo:"ouvindo",pensando:"processando",falando:"respondendo",erro:"falha"}[c]||"em espera"}
+function estado(c,txt){document.body.className=c||"";document.body.dataset.tema=TEMA;$("estado").textContent=txt||{ouvindo:"ouvindo",pensando:"processando",falando:"respondendo",erro:"falha"}[c]||"em espera"}
 
 // onda do núcleo
 const cv=$("wave"),cx=cv.getContext("2d");let nivel=0,alvo=0,t=0;
-function onda(){t+=.05;nivel+=(alvo-nivel)*.15;cx.clearRect(0,0,400,400);cx.strokeStyle="rgba(63,217,255,.85)";cx.lineWidth=2;cx.shadowColor="#3fd9ff";cx.shadowBlur=8;
+function onda(){t+=.05;nivel+=(alvo-nivel)*.15;cx.clearRect(0,0,400,400);const C=corC();cx.strokeStyle=C;cx.lineWidth=2;cx.shadowColor=C;cx.shadowBlur=8;
   for(let k=0;k<2;k++){cx.beginPath();for(let a=0;a<=Math.PI*2+.01;a+=Math.PI/90){const r=118+Math.sin(a*6+t*(k?-2:3))*nivel*14+Math.sin(a*11-t*4)*nivel*7;const x=200+Math.cos(a)*r,y=200+Math.sin(a)*r;a?cx.lineTo(x,y):cx.moveTo(x,y)}cx.globalAlpha=k?.4:.9;cx.stroke()}
   cx.globalAlpha=1;$("core").style.transform="scale("+(1+nivel*.08)+")";requestAnimationFrame(onda)}
 onda();
@@ -188,10 +271,10 @@ $("btnHist").onclick=()=>{$("hist").classList.add("on");$("log").scrollTop=1e9};
 function limpar(){if(!confirm("Apagar o registro da conversa? (as notas ficam)"))return;HIST=[];ls.set("sx_hist",[]);$("log").innerHTML="";legenda("","Registro apagado.")}
 
 // ---------- ajustes ----------
-$("btnCfg").onclick=()=>{$("nome").value=NOME;$("trat").value=TRAT;$("autoAbrir").checked=AUTO;$("key").value=KEY;cfg.showModal()};
+$("btnCfg").onclick=()=>{$("nome").value=NOME;$("trat").value=TRAT;$("autoAbrir").checked=AUTO;$("key").value=KEY;$("tema").value=TEMA;cfg.showModal()};
 function salvarCfg(){const k=$("key").value.trim();if(k&&!k.startsWith("gsk_")){alert("A chave da Groq começa com gsk_");return}
   KEY=k;NOME=$("nome").value.trim();TRAT=$("trat").value.trim();AUTO=$("autoAbrir").checked;
-  ls.set("sx_key",KEY);ls.set("sx_nome",NOME);ls.set("sx_trat",TRAT);ls.set("sx_auto",AUTO);cfg.close();hud();legenda("","Ajustes salvos.")}
+  ls.set("sx_key",KEY);ls.set("sx_nome",NOME);ls.set("sx_trat",TRAT);ls.set("sx_auto",AUTO);aplicarTema($("tema").value);cfg.close();hud();legenda("","Ajustes salvos.")}
 
 // ---------- voz ----------
 let vozPt=null;function escolherVoz(){const v=speechSynthesis.getVoices().filter(v=>/^pt(-|_)BR/i.test(v.lang)||v.lang==="pt-BR");vozPt=v.find(x=>/Google/i.test(x.name))||v.find(x=>/female|Luciana|Francisca|Thalita/i.test(x.name))||v[0]||speechSynthesis.getVoices().find(x=>x.lang.startsWith("pt"))||null}
@@ -225,6 +308,10 @@ Tipos:
 - {"tipo":"imagem","prompt":"descrição visual MUITO detalhada em inglês","formato":"quadrado|retrato|paisagem"} cria uma imagem
 - {"tipo":"app","descricao":"o que o app faz, telas, funções, estilo, bem detalhado"} cria um aplicativo web funcional na hora
 - {"tipo":"video","tema":"roteiro ou assunto","cenas":N} cria um vídeo narrado com imagens geradas (N de 3 a 10; cada cena dura uns 8 a 12 segundos)
+- {"tipo":"clima"} mostra o clima de agora onde a pessoa está
+- {"tipo":"projetos"} abre a galeria de projetos (apps, imagens e vídeos já criados)
+- {"tipo":"foco","minutos":N} inicia um ciclo de foco (pomodoro)
+- {"tipo":"tema","nome":"ciano|stark|ouro|matrix|nebula"} muda o visual
 Para imagem, app ou vídeo, responda só uma frase curta tipo "Gerando agora" e coloque a ação.
 Use ação sempre que for algo para FAZER. Nunca diga que fez algo fora dessa lista; se for impossível (mexer em configurações do celular, comprar, ler arquivos, filmar vídeo realista tipo cinema), diga com naturalidade e ofereça o mais próximo.`;
 function sistema(){const agora=new Date().toLocaleString("pt-BR",{dateStyle:"full",timeStyle:"short"});const quem=NOME||"o usuário";
@@ -258,6 +345,10 @@ function executar(a,bol){const enc=encodeURIComponent;let url=null,rot=null;cons
     case"imagem":criarImagem(a);return;
     case"app":criarApp(a);return;
     case"video":criarVideo(a);return;
+    case"clima":clima(true);return;
+    case"projetos":abrirProj();return;
+    case"foco":executar({tipo:"timer",segundos:Math.max(1,+a.minutos||25)*60,rotulo:"Foco"});return;
+    case"tema":{const m={ciano:"",stark:"stark",ouro:"ouro",matrix:"matrix",nebula:"nebula"};aplicarTema(m[String(a.nome||"").toLowerCase()]??"");meta("◐ tema "+(a.nome||"ciano"));return}
     default:return}
   if(url&&/^(https?:|mailto:|tel:)/.test(url)){addBotao(rot,()=>window.open(url,"_blank"));if(AUTO&&/^https?:/.test(url))try{window.open(url,"_blank")}catch(e){}}}
 function extrairAcoes(t){const acoes=[];const limpo=t.replace(/\[\[ACAO\s*(\{[\s\S]*?\})\s*\]\]/g,(m,j)=>{try{acoes.push(JSON.parse(j))}catch(e){}return""}).replace(/[*#`]/g,"").trim();return{limpo,acoes}}
@@ -282,7 +373,7 @@ async function enviar(txt){txt=(txt||"").trim().slice(0,2000);if(!txt||ocupado)r
   const frases=["Um instante.","Processando.","Só um segundo."];
   const fila=(i,seg)=>{legenda(txt,"Servidor grátis liberado em "+(seg||5)+" s. Com a chave Groq nos ajustes isso some.")};
   try{const resp=await responder(model,[{role:"system",content:sistema()},...HIST.slice(-16)],fila);
-    const ms=Math.round(performance.now()-t0);$("lat").textContent=(ms/1000).toFixed(1)+"s";$("b3").style.transform="scaleX("+Math.max(.08,1-ms/15000)+")";
+    const ms=Math.round(performance.now()-t0);$("lat").textContent=(ms/1000).toFixed(1)+"s";LATS.push(ms);LATS=LATS.slice(-24);ls.set("sx_lats",LATS);spark();
     const {limpo,acoes}=extrairAcoes(resp);const fala=limpo||"Feito.";
     HIST.push({role:"assistant",content:resp});ls.set("sx_hist",HIST.slice(-40));TURNOS++;hud();
     legenda(txt,fala);const b=bolha("a",fala,(KEY?"turbo":"grátis")+" · "+(ms/1000).toFixed(1)+" s");acoes.forEach(a=>executar(a,b));
@@ -338,8 +429,8 @@ async function gerarImg(prompt,w,h,rotulo){prompt=String(prompt||"").slice(0,900
   throw new Error("o gerador de imagens está ocupado")}
 const FORM={quadrado:[1024,1024],retrato:[768,1344],paisagem:[1344,768]};
 async function criarImagem(a){estudio("IMAGEM");const [w,h]=FORM[a.formato]||FORM.quadrado;
-  try{const url=await gerarImg(a.prompt,w,h,"Renderizando imagem");const img=new Image();img.src=url;img.alt=a.prompt||"";$("estBody").appendChild(img);estStatus("");
-    estBtn("Baixar",()=>baixar(url,"sexta-imagem.jpg"),true);estBtn("Outra versão",()=>criarImagem(a));addBotao("Ver imagem",()=>est.classList.add("on"))}
+  try{const url=await gerarImg(a.prompt,w,h,"Renderizando imagem");const img=new Image();img.src=url;img.alt=a.prompt||"";$("estBody").appendChild(img);try{await img.decode()}catch(e){}estStatus("");
+    salvarProj("sx_imgs",{p:a.prompt,f:a.formato||"quadrado",img:await miniatura(img)});estBtn("Baixar",()=>baixar(url,"sexta-imagem.jpg"),true);estBtn("Outra versão",()=>criarImagem(a));addBotao("Ver imagem",()=>est.classList.add("on"))}
   catch(e){estStatus("Falhou: "+e.message+". Tenta de novo em um minuto.")}}
 
 // apps: gerados num iframe isolado (sandbox sem acesso aos seus dados, chave ou notas)
@@ -349,7 +440,7 @@ async function criarApp(a){estudio("APLICATIVO");estStatus("Projetando o app… 
     let html=(r.match(/```(?:html)?\s*([\s\S]*?)```/i)||[,r])[1].trim();const k=html.search(/<!doctype|<html/i);if(k>0)html=html.slice(k);
     if(!/<html|<body|<div/i.test(html))throw new Error("o código veio incompleto");
     const f=document.createElement("iframe");f.setAttribute("sandbox","allow-scripts allow-forms allow-modals");f.setAttribute("referrerpolicy","no-referrer");f.srcdoc=html;$("estBody").appendChild(f);estStatus("");
-    const apps=ls.get("sx_apps",[]);apps.unshift({d:a.descricao,h:html.slice(0,200000),t:Date.now()});ls.set("sx_apps",apps.slice(0,5));
+    salvarProj("sx_apps",{d:a.descricao,h:html.slice(0,200000)},8);
     estBtn("Baixar app (.html)",()=>baixar(new Blob([html],{type:"text/html"}),"app-sexta.html"),true);estBtn("Refazer",()=>criarApp(a));addBotao("Abrir app",()=>est.classList.add("on"))}
   catch(e){estStatus("Falhou: "+e.message+".")}}
 
@@ -357,13 +448,13 @@ async function criarApp(a){estudio("APLICATIVO");estStatus("Projetando o app… 
 let pararVideo=null;
 async function criarVideo(a){estudio("VÍDEO");const n=Math.max(3,Math.min(10,+a.cenas||5));estStatus("Escrevendo o roteiro…");
   const sys=`Crie o roteiro de um vídeo curto narrado em português do Brasil. Responda SOMENTE com JSON válido no formato {"titulo":"...","cenas":[{"prompt":"descrição visual cinematográfica detalhada em inglês","fala":"narração da cena em português, 1 ou 2 frases"}]} com exatamente ${n} cenas, visual coerente entre elas.`;
-  let rot;try{const r=await responder(POTENTE,[{role:"system",content:sys},{role:"user",content:String(a.tema||"").slice(0,2000)}],(i,seg)=>estStatus("Roteiro: servidor libera em "+(seg||5)+" s…"),3000);
+  let rot=a._rot||null;if(!rot)try{const r=await responder(POTENTE,[{role:"system",content:sys},{role:"user",content:String(a.tema||"").slice(0,2000)}],(i,seg)=>estStatus("Roteiro: servidor libera em "+(seg||5)+" s…"),3000);
     rot=JSON.parse((r.match(/\{[\s\S]*\}/)||["{}"])[0]);if(!rot.cenas||!rot.cenas.length)throw new Error("roteiro vazio")}catch(e){estStatus("Falhou no roteiro: "+e.message);return}
   const cv=document.createElement("canvas");cv.width=720;cv.height=1280;const g=cv.getContext("2d");$("estBody").appendChild(cv);
   g.fillStyle="#01060c";g.fillRect(0,0,720,1280);g.fillStyle="#3fd9ff";g.font="bold 40px system-ui";g.textAlign="center";g.fillText(rot.titulo||"",360,640);
   const imgs=[];for(let i=0;i<rot.cenas.length;i++){try{const u=await gerarImg(rot.cenas[i].prompt,720,1280,"Cena "+(i+1)+" de "+rot.cenas.length);const im=new Image();im.src=u;await im.decode();imgs.push(im);
       g.drawImage(im,0,0,720,1280)}catch(e){imgs.push(null)}}
-  estStatus("Pronto: "+(rot.titulo||"vídeo")+".");
+  estStatus("Pronto: "+(rot.titulo||"vídeo")+".");if(!a._rot){let th=null;const i0=imgs.find(x=>x);if(i0)th=await miniatura(i0);salvarProj("sx_vids",{titulo:rot.titulo,tema:a.tema,cenas:rot.cenas,img:th})}
   const tocar=async gravar=>{let parar=false;pararVideo=()=>{parar=true;calar()};let recd=null,chunks=[];
     if(gravar&&window.MediaRecorder){try{recd=new MediaRecorder(cv.captureStream(30),{mimeType:MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm"});recd.ondataavailable=e=>e.data.size&&chunks.push(e.data);recd.start(500)}catch(e){recd=null}}
     for(let i=0;i<rot.cenas.length&&!parar;i++){const im=imgs[i],fala=rot.cenas[i].fala||"";let falando=true;const t0=performance.now();
@@ -378,11 +469,81 @@ async function criarVideo(a){estudio("VÍDEO");const n=Math.max(3,Math.min(10,+a
 
 $("bot").onsubmit=e=>{e.preventDefault();const v=$("in").value;$("in").value="";$("in").blur();enviar(v)};
 
+
+// ---------- v5: projetos, criar, clima, efeitos ----------
+async function miniatura(im){try{const c=document.createElement("canvas");c.width=240;c.height=240;const g=c.getContext("2d");const s=Math.min(im.naturalWidth||im.width,im.naturalHeight||im.height);g.drawImage(im,((im.naturalWidth||im.width)-s)/2,((im.naturalHeight||im.height)-s)/2,s,s,0,0,240,240);return c.toDataURL("image/jpeg",.7)}catch(e){return null}}
+function salvarProj(k,o,max){const l=ls.get(k,[]);o.t=Date.now();l.unshift(o);let n=max||12;let arr=l.slice(0,n);while(arr.length){try{localStorage.setItem(k,JSON.stringify(arr));break}catch(e){arr.pop()}}hud()}
+const proj=$("proj");let abaProj="apps";
+function abrirProj(t){abaProj=t||abaProj;proj.classList.add("on");document.querySelectorAll("#projTabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===abaProj));renderProj()}
+document.querySelectorAll("#projTabs button").forEach(b=>b.onclick=()=>abrirProj(b.dataset.t));
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function renderProj(){const L=$("projList");L.innerHTML="";const k={apps:"sx_apps",imgs:"sx_imgs",vids:"sx_vids"}[abaProj];const l=ls.get(k,[]);
+  if(!l.length){L.appendChild(el("div","vazio",{apps:"Nenhum app ainda. Diga: \"cria um app de...\"",imgs:"Nenhuma imagem ainda.",vids:"Nenhum vídeo ainda."}[abaProj]));return}
+  l.forEach((o,i)=>{const c=el("div","pc");if(o.img){const im=new Image();im.src=o.img;c.appendChild(im)}
+    c.appendChild(el("div","tt",o.titulo||o.d||o.p||"Projeto"));c.appendChild(el("div","dt",new Date(o.t||0).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})));
+    const bb=el("div","bb");const ab=el("button",null,"Abrir"),rf=el("button",null,abaProj==="apps"?"Baixar":"Refazer"),dl=el("button",null,"✕");
+    ab.onclick=()=>{proj.classList.remove("on");if(abaProj==="apps"){estudio("APLICATIVO");const f=document.createElement("iframe");f.setAttribute("sandbox","allow-scripts allow-forms allow-modals");f.setAttribute("referrerpolicy","no-referrer");f.srcdoc=o.h;$("estBody").appendChild(f);estBtn("Baixar app (.html)",()=>baixar(new Blob([o.h],{type:"text/html"}),"app-sexta.html"),true);estBtn("Melhorar",()=>{criarApp({descricao:o.d+"\n\nMelhore ainda mais: visual mais caprichado, mais funções e detalhes."})})}
+      else if(abaProj==="imgs"){criarImagem({prompt:o.p,formato:o.f})}else{criarVideo({tema:o.tema,cenas:(o.cenas||[]).length,_rot:{titulo:o.titulo,cenas:o.cenas}})}};
+    rf.onclick=()=>{if(abaProj==="apps")baixar(new Blob([o.h],{type:"text/html"}),"app-sexta.html");else ab.onclick()};
+    dl.onclick=()=>{if(!confirm("Apagar este projeto?"))return;const n=ls.get(k,[]);n.splice(i,1);ls.set(k,n);renderProj();hud()};
+    bb.append(ab,rf,dl);c.appendChild(bb);L.appendChild(c)})}
+
+const CHIPS={imagem:["cidade cyberpunk à noite","retrato estilo cinema","logo minimalista","paisagem épica"],app:["lista de compras","controle de gastos","quiz de futebol","agenda de treinos","calculadora de IMC","jogo da velha"],video:["curiosidades do espaço","história do Brasil em 1 minuto","motivação matinal","receita rápida"]};
+let crTipo="imagem";
+function abrirCriar(tipo){crTipo=tipo;$("crTit").textContent={imagem:"CRIAR IMAGEM",app:"CRIAR APLICATIVO",video:"CRIAR VÍDEO"}[tipo];$("crFmt").style.display=tipo==="imagem"?"":"none";$("crTxt").value="";
+  $("crTxt").placeholder={imagem:"Ex.: um carro esportivo voando sobre São Paulo ao pôr do sol, estilo filme",app:"Ex.: app de controle de gastos com gráfico, categorias e metas",video:"Ex.: 5 curiosidades sobre buracos negros"}[tipo];
+  const ch=$("crChips");ch.innerHTML="";CHIPS[tipo].forEach(t=>{const b=el("button",null,t);b.onclick=()=>{$("crTxt").value=t};ch.appendChild(b)});criar.showModal()}
+$("crGo").onclick=async()=>{const t=$("crTxt").value.trim().slice(0,2000);if(!t)return;criar.close();
+  if(crTipo==="app")criarApp({descricao:t});
+  else if(crTipo==="video")criarVideo({tema:t,cenas:5});
+  else{estudio("IMAGEM");estStatus("Refinando o prompt…");let p=t;try{p=await responder(LEVE,[{role:"system",content:"Transforme o pedido numa descrição visual em inglês, muito detalhada e cinematográfica (luz, câmera, estilo, cores), em uma única linha, sem aspas."},{role:"user",content:t}],null,300)}catch(e){}criarImagem({prompt:p,formato:$("crSel").value})}};
+
+document.querySelectorAll("#dock button").forEach(b=>b.onclick=()=>{const k=b.dataset.k;
+  if(k==="imagem"||k==="app"||k==="video")abrirCriar(k);
+  else if(k==="proj")abrirProj();
+  else if(k==="notas"){limparAcoes();addInfo(NOTAS.length?NOTAS.map((n,i)=>(i+1)+". "+n).join("\n"):"Nenhuma nota. Diga: \"anota que...\"")}
+  else if(k==="clima")clima(true);
+  else if(k==="foco"){limparAcoes();executar({tipo:"timer",segundos:1500,rotulo:"Foco"});legenda("","Ciclo de foco de 25 minutos iniciado.")}
+  else if(k==="tema"){const ks=Object.keys(TEMAS);aplicarTema(ks[(ks.indexOf(TEMA)+1)%ks.length])}});
+
+// clima via Open-Meteo (sem chave). Pede localização só quando você usa.
+const WMO={0:"céu limpo",1:"quase limpo",2:"parcialmente nublado",3:"nublado",45:"neblina",48:"neblina",51:"garoa",53:"garoa",55:"garoa forte",61:"chuva fraca",63:"chuva",65:"chuva forte",80:"pancadas de chuva",81:"pancadas de chuva",82:"temporal",95:"trovoadas",96:"trovoadas com granizo",99:"trovoadas com granizo"};
+function clima(falarRes){if(!navigator.geolocation){legenda("","Sem acesso à localização neste navegador.");return}
+  navigator.geolocation.getCurrentPosition(async pos=>{try{const {latitude:la,longitude:lo}=pos.coords;
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la.toFixed(3)}&longitude=${lo.toFixed(3)}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`);
+    const j=await r.json();const c=j.current,d=j.daily;const desc=WMO[c.weather_code]||"tempo estável";
+    $("clima").textContent=Math.round(c.temperature_2m)+"°";
+    const t=`Agora faz ${Math.round(c.temperature_2m)} graus, ${desc}, sensação de ${Math.round(c.apparent_temperature)}. Hoje vai de ${Math.round(d.temperature_2m_min[0])} a ${Math.round(d.temperature_2m_max[0])}, com ${d.precipitation_probability_max[0]??0}% de chance de chuva.`;
+    if(falarRes){limparAcoes();addInfo("☁ "+t+"\n💧 umidade "+c.relative_humidity_2m+"% · 💨 vento "+Math.round(c.wind_speed_10m)+" km/h");legenda("",t);falar(t,()=>{estado("");retomar()})}}
+    catch(e){falarRes&&legenda("","Não consegui pegar o clima agora.")}},()=>{falarRes&&legenda("","Preciso da sua localização pra ver o clima. Libere no Chrome.")},{timeout:12000,maximumAge:600000})}
+try{navigator.permissions&&navigator.permissions.query({name:"geolocation"}).then(p=>{if(p.state==="granted")clima(false)})}catch(e){}
+
+// sparkline de latência
+function spark(){const c=$("spark");if(!c)return;const g=c.getContext("2d");g.clearRect(0,0,160,44);const C=corC();g.strokeStyle=C;g.fillStyle=C;g.lineWidth=2;
+  const d=LATS.length?LATS:[0];const mx=Math.max(3000,...d);g.globalAlpha=.25;g.fillRect(0,43,160,1);g.globalAlpha=1;g.beginPath();
+  d.forEach((v,i)=>{const x=d.length>1?i*(158/(d.length-1))+1:80,y=40-(v/mx)*36;i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke()}
+spark();
+
+// partículas holográficas
+(function(){const c=$("fx"),g=c.getContext("2d");let W,H,P=[];function rs(){W=c.width=innerWidth;H=c.height=innerHeight;P=Array.from({length:Math.min(60,Math.round(W*H/14000))},()=>({x:Math.random()*W,y:Math.random()*H,v:.15+Math.random()*.5,r:Math.random()*1.6+.3}))}
+  addEventListener("resize",rs);rs();(function f(){g.clearRect(0,0,W,H);const C=corC();g.fillStyle=C;g.strokeStyle=C;
+    for(const p of P){p.y-=p.v*(1+nivel*3);if(p.y<-5){p.y=H+5;p.x=Math.random()*W}g.globalAlpha=.35;g.beginPath();g.arc(p.x,p.y,p.r,0,7);g.fill()}
+    g.globalAlpha=.07;for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const a=P[i],b=P[j],dx=a.x-b.x,dy=a.y-b.y;if(dx*dx+dy*dy<9000){g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}}
+    g.globalAlpha=1;requestAnimationFrame(f)})()})();
+
+// ticker e ID
+$("hexId").textContent="ID "+(Math.random()*0xffff|0).toString(16).toUpperCase().padStart(4,"0")+"-"+(Math.random()*0xffff|0).toString(16).toUpperCase().padStart(4,"0");
+function ticker(){const d=new Date();const l=["SEXTA v5 ONLINE","CANAL CRIPTOGRAFADO TLS","CSP ATIVO · APPS EM SANDBOX","MODO "+(KEY?"TURBO GROQ":"GRÁTIS"),NOTAS.length+" NOTAS NA MEMÓRIA","DIGA \"OI\" PARA FALAR","CRIE IMAGENS, APPS E VÍDEOS NO DOCK","TEMA "+(TEMAS[TEMA]||"ciano").toUpperCase(),d.toLocaleDateString("pt-BR",{weekday:"long"}).toUpperCase()];$("tickTxt").textContent=l.join("   ◆   ")}
+ticker();setInterval(ticker,38000);
+aplicarTema(TEMA);
+
 // ---------- inicialização ----------
 HIST.slice(-12).forEach(m=>{const {limpo}=extrairAcoes(m.content);bolha(m.role==="user"?"u":"a",limpo||"Feito.")});
 const msgsBoot=["CALIBRANDO SENSORES","CARREGANDO NÚCLEO","SISTEMAS ONLINE"];let bi=0;const biv=setInterval(()=>{$("bootTxt").textContent=msgsBoot[Math.min(bi++,2)]},450);
+const LOGB=["> kernel neural ......... ok","> síntese de voz pt-BR ... "+(("speechSynthesis" in window)?"ok":"ausente"),"> reconhecimento de voz . "+(SR?"ok":"use o Chrome"),"> política CSP .......... ativa","> sandbox de apps ....... ativa","> estúdio criativo ...... ok","> memória local ......... "+NOTAS.length+" notas","> link "+(KEY?"turbo groq":"grátis")+" ......... ok","> toque para ativar_"];
+let li=0;const liv=setInterval(()=>{if(li>=LOGB.length){clearInterval(liv);return}$("bootLog").textContent+=LOGB[li++]+"\n";document.querySelector("#bootBar i").style.width=(li/LOGB.length*100)+"%"},180);
 function saudacao(){const h=new Date().getHours();const p=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";const n=NOME?(", "+NOME):(TRAT?", "+TRAT:"");return p+n+". Sistemas online. Tô ouvindo, é só falar."}
-$("boot").onclick=()=>{clearInterval(biv);$("boot").classList.add("fora");ativado=true;rotuloLive();const s=saudacao();ACORDADA=true;ultimo=Date.now();legenda("",s);falar(s,()=>{estado("");retomar()})};
+$("boot").onclick=()=>{clearInterval(biv);clearInterval(liv);$("boot").classList.add("fora");ativado=true;rotuloLive();const s=saudacao();ACORDADA=true;ultimo=Date.now();legenda("",s);falar(s,()=>{estado("");retomar()})};
 setTimeout(()=>{if(!$("boot").classList.contains("fora"))$("bootTxt").textContent="SISTEMAS ONLINE"},1500);
 </script>
 </body>
