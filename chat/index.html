@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#01060c">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src https://api.open-meteo.com https://api.groq.com https://text.pollinations.ai https://image.pollinations.ai; img-src 'self' data: blob: https://image.pollinations.ai; media-src 'self' blob: data:; frame-src blob: data: about:; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self' blob:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.open-meteo.com https://api.groq.com https://text.pollinations.ai https://image.pollinations.ai; img-src 'self' data: blob: https://image.pollinations.ai; media-src 'self' blob: data:; frame-src blob: data: about:; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self' blob:">
 <meta name="referrer" content="no-referrer">
 <title>SEXTA · Sistema v5</title>
 <link rel="manifest" href="manifest.json">
@@ -227,6 +227,7 @@ select{width:100%;padding:10px;margin:6px 0 12px;background:var(--bg);color:var(
   <small>Tema visual</small>
   <select id="tema"><option value="">Ciano (J.A.R.V.I.S.)</option><option value="stark">Vermelho Stark</option><option value="ouro">Ouro</option><option value="matrix">Matrix</option><option value="nebula">Nebulosa</option></select>
   <label class="ck"><input type="checkbox" id="autoAbrir" checked> Abrir links automaticamente</label>
+  <label class="ck"><input type="checkbox" id="offline" checked> Ouvido offline sem bipe (baixa 31 MB uma vez)</label>
   <small>Opcional: chave GroqCloud (gsk_) para respostas mais rápidas. Sem ela funciona normal.</small>
   <input id="key" type="password" placeholder="gsk_... (opcional)" autocomplete="off">
   <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="cfg.close()">Cancelar</button><button class="btn p" onclick="salvarCfg()">Salvar</button></div>
@@ -271,9 +272,9 @@ $("btnHist").onclick=()=>{$("hist").classList.add("on");$("log").scrollTop=1e9};
 function limpar(){if(!confirm("Apagar o registro da conversa? (as notas ficam)"))return;HIST=[];ls.set("sx_hist",[]);$("log").innerHTML="";legenda("","Registro apagado.")}
 
 // ---------- ajustes ----------
-$("btnCfg").onclick=()=>{$("nome").value=NOME;$("trat").value=TRAT;$("autoAbrir").checked=AUTO;$("key").value=KEY;$("tema").value=TEMA;cfg.showModal()};
+$("btnCfg").onclick=()=>{$("nome").value=NOME;$("trat").value=TRAT;$("autoAbrir").checked=AUTO;$("offline").checked=ls.get("sx_offline",true);$("key").value=KEY;$("tema").value=TEMA;cfg.showModal()};
 function salvarCfg(){const k=$("key").value.trim();if(k&&!k.startsWith("gsk_")){alert("A chave da Groq começa com gsk_");return}
-  KEY=k;NOME=$("nome").value.trim();TRAT=$("trat").value.trim();AUTO=$("autoAbrir").checked;
+  KEY=k;NOME=$("nome").value.trim();TRAT=$("trat").value.trim();AUTO=$("autoAbrir").checked;{const of=$("offline").checked;ls.set("sx_offline",of);if(!of){vkDesligar();VK.pronto=false}else{VK.falhou=false;vkCarregar()}}
   ls.set("sx_key",KEY);ls.set("sx_nome",NOME);ls.set("sx_trat",TRAT);ls.set("sx_auto",AUTO);aplicarTema($("tema").value);cfg.close();hud();legenda("","Ajustes salvos.")}
 
 // ---------- voz ----------
@@ -402,9 +403,30 @@ function tratar(t){t=(t||"").trim();if(!t)return false;const agora=Date.now();
   ACORDADA=true;ultimo=agora;const resto=t.replace(WAKE,"").trim();
   if(resto.split(/\s+/).length<2&&resto.length<12){const r=RESP_OI();legenda(t,r);falar(r,()=>{estado("");retomar()});return true}
   enviar(resto);return true}
+// ---------- ouvido offline (Vosk): espera "Sexta" sem bipe ----------
+const VK={pronto:false,carregando:false,falhou:false,model:null,rec:null,ctx:null,stream:null,node:null,ligado:false,ultimoWake:0};
+function vkCarregar(){if(VK.pronto||VK.carregando||VK.falhou||!ls.get("sx_offline",true))return;if(!navigator.mediaDevices||!window.WebAssembly||!window.AudioContext){VK.falhou=true;return}
+  VK.carregando=true;addInfo("⬇ baixando ouvido offline (31 MB, só na primeira vez)");
+  const sc=document.createElement("script");sc.src="vosk/vosk.js";sc.onerror=()=>{VK.falhou=true;VK.carregando=false};
+  sc.onload=async()=>{try{VK.model=await Vosk.createModel(new URL("vosk/pt.tar.gz",location.href).href);VK.pronto=true;VK.carregando=false;addInfo("🛡 ouvido offline pronto: diga \"oi Sexta\", sem bipe");if(!ACORDADA)retomar()}catch(e){VK.falhou=true;VK.carregando=false;addInfo("ouvido offline indisponível, usando o do Chrome")}};document.head.appendChild(sc)}
+async function vkLigar(){if(!VK.pronto||VK.ligado)return;VK.ligado=true;try{try{rec&&rec.abort()}catch(e){}
+  VK.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
+  if(!VK.ligado){VK.stream.getTracks().forEach(t=>t.stop());return}
+  VK.ctx=new AudioContext();const sr=VK.ctx.sampleRate;
+  if(!VK.rec||VK.rec._sr!==sr){VK.rec=new VK.model.KaldiRecognizer(sr,JSON.stringify(["oi sexta","ei sexta","olá sexta","ok sexta","fala sexta","bom dia sexta","boa tarde sexta","boa noite sexta","sexta","[unk]"]));VK.rec._sr=sr;
+    try{VK.rec.setWords(true)}catch(e){}VK.rec.on("result",x=>{const w=(x.result&&x.result.result)||[];if(w.some(o=>o.word==="sexta"&&o.conf>=.85))vkAcordou()})}
+  const src=VK.ctx.createMediaStreamSource(VK.stream);VK.node=VK.ctx.createScriptProcessor(4096,1,1);
+  VK.node.onaudioprocess=e=>{if(!VK.ligado||ACORDADA||ocupado||digitando||document.hidden||document.body.classList.contains("falando"))return;let m=0;const d=e.inputBuffer.getChannelData(0);for(let i=0;i<d.length;i+=64)m=Math.max(m,Math.abs(d[i]));alvo=Math.min(.35,m*1.5);try{VK.rec.acceptWaveform(e.inputBuffer)}catch(er){}};
+  src.connect(VK.node);VK.node.connect(VK.ctx.destination);if(!ACORDADA&&!ocupado)estado("","diga oi sexta")}
+  catch(e){VK.ligado=false;if(e&&e.name==="NotAllowedError"){AO_VIVO=false;ls.set("sx_escuta",false);rotuloLive();legenda("","Preciso do microfone. Libere nas permissões do Chrome para este site.");estado("erro")}else{VK.falhou=true;retomar()}}}
+function vkDesligar(){VK.ligado=false;try{VK.node&&VK.node.disconnect()}catch(e){}try{VK.stream&&VK.stream.getTracks().forEach(t=>t.stop())}catch(e){}try{VK.ctx&&VK.ctx.close()}catch(e){}VK.node=VK.stream=VK.ctx=null;alvo=0}
+function vkAcordou(){const ag=Date.now();if(ag-VK.ultimoWake<2500||ACORDADA)return;VK.ultimoWake=ag;vkDesligar();try{VK.rec.retrieveFinalResult()}catch(e){}
+  ACORDADA=true;ultimo=ag;try{navigator.vibrate&&navigator.vibrate(35)}catch(e){}estado("ouvindo");legenda("","Pode falar.");setTimeout(loopEscuta,120)}
 function retomar(){if(AO_VIVO&&ativado)setTimeout(loopEscuta,250)}
 function loopEscuta(){if(digitando||Date.now()<pausaAte||!AO_VIVO||!ativado||ocupado||ouvindoAgora||document.body.classList.contains("falando")||document.hidden)return;
   if(ACORDADA&&Date.now()-ultimo>40000)dormir();
+  if(!ACORDADA&&VK.pronto&&!VK.falhou){vkLigar();return}
+  if(VK.ligado)vkDesligar();
   escutar(t=>{if(!tratar(t))retomar()},retomar,true)}
 function escutar(onTexto,onVazio,silencioso){if(!SR){legenda("","Seu navegador não reconhece voz. Abra no Google Chrome.");return}
   try{rec&&rec.abort()}catch(e){}rec=new SR();rec.lang="pt-BR";rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;let final="",parcial="",feito=false;ouvindoAgora=true;
@@ -415,9 +437,9 @@ function escutar(onTexto,onVazio,silencioso){if(!SR){legenda("","Seu navegador n
   try{rec.start()}catch(e){ouvindoAgora=false;setTimeout(()=>onVazio&&onVazio(),600)}}
 function ouvirVivo(){retomar()}
 function ouvir(){ACORDADA=true;ultimo=Date.now();escutar(t=>{ultimo=Date.now();enviar(t)},()=>{estado("");retomar()})}
-$("live").onclick=()=>{AO_VIVO=!AO_VIVO;ls.set("sx_escuta",AO_VIVO);rotuloLive();if(AO_VIVO){ativado=true;legenda("","Ouvindo. Diga oi quando quiser.");loopEscuta()}else{try{rec&&rec.abort()}catch(e){}calar();ACORDADA=false;estado("","mudo");legenda("","Microfone desligado. Toque em MUDO para voltar a ouvir.")}};
-$("reactor").onclick=()=>{if(document.body.classList.contains("falando")){calar();estado("");ACORDADA=true;ultimo=Date.now();retomar();return}try{rec&&rec.abort()}catch(e){}ouvindoAgora=false;ouvir()};
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)retomar();else{try{rec&&rec.abort()}catch(e){}}});
+$("live").onclick=()=>{AO_VIVO=!AO_VIVO;ls.set("sx_escuta",AO_VIVO);rotuloLive();if(AO_VIVO){ativado=true;legenda("","Ouvindo. Diga oi Sexta quando quiser.");loopEscuta()}else{try{rec&&rec.abort()}catch(e){}vkDesligar();calar();ACORDADA=false;estado("","mudo");legenda("","Microfone desligado. Toque em MUDO para voltar a ouvir.")}};
+$("reactor").onclick=()=>{vkDesligar();if(document.body.classList.contains("falando")){calar();estado("");ACORDADA=true;ultimo=Date.now();retomar();return}try{rec&&rec.abort()}catch(e){}ouvindoAgora=false;ouvir()};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)retomar();else{try{rec&&rec.abort()}catch(e){}vkDesligar()}});
 setInterval(()=>{if(AO_VIVO&&ativado&&!ouvindoAgora&&!ocupado&&!document.body.classList.contains("falando"))loopEscuta()},3000);
 
 // ---------- estúdio: imagem, app, vídeo ----------
@@ -552,7 +574,7 @@ const msgsBoot=["CALIBRANDO SENSORES","CARREGANDO NÚCLEO","SISTEMAS ONLINE"];le
 const LOGB=["> kernel neural ......... ok","> síntese de voz pt-BR ... "+(("speechSynthesis" in window)?"ok":"ausente"),"> reconhecimento de voz . "+(SR?"ok":"use o Chrome"),"> política CSP .......... ativa","> sandbox de apps ....... ativa","> estúdio criativo ...... ok","> memória local ......... "+NOTAS.length+" notas","> link "+(KEY?"turbo groq":"grátis")+" ......... ok","> toque para ativar_"];
 let li=0;const liv=setInterval(()=>{if(li>=LOGB.length){clearInterval(liv);return}$("bootLog").textContent+=LOGB[li++]+"\n";document.querySelector("#bootBar i").style.width=(li/LOGB.length*100)+"%"},180);
 function saudacao(){const h=new Date().getHours();const p=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";const n=NOME?(", "+NOME):(TRAT?", "+TRAT:"");return p+n+". Sistemas online. Tô ouvindo, é só falar."}
-$("boot").onclick=()=>{clearInterval(biv);clearInterval(liv);$("boot").classList.add("fora");ativado=true;rotuloLive();const s=saudacao();ACORDADA=true;ultimo=Date.now();legenda("",s);falar(s,()=>{estado("");retomar()})};
+$("boot").onclick=()=>{setTimeout(vkCarregar,1500);clearInterval(biv);clearInterval(liv);$("boot").classList.add("fora");ativado=true;rotuloLive();const s=saudacao();ACORDADA=true;ultimo=Date.now();legenda("",s);falar(s,()=>{estado("");retomar()})};
 setTimeout(()=>{if(!$("boot").classList.contains("fora"))$("bootTxt").textContent="SISTEMAS ONLINE"},1500);
 </script>
 </body>
