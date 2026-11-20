@@ -145,7 +145,7 @@ select{width:100%;padding:10px;margin:6px 0 12px;background:var(--bg);color:var(
 <div id="boot"><b>S.E.X.T.A.</b><span id="bootTxt">INICIALIZANDO SISTEMAS</span><div id="bootBar"><i></i></div><pre id="bootLog"></pre><span class="mu" style="font-size:10px;letter-spacing:1.5px;text-align:center;padding:0 24px">toque uma vez para ativar<br>depois é só dizer "oi"</span></div>
 
 <div id="top">
-  <div class="blk"><b>SEXTA</b><span class="mu" style="font-size:9px;white-space:nowrap">sistema · v6</span></div>
+  <div class="blk"><b>SEXTA</b><span class="mu" style="font-size:9px;white-space:nowrap">sistema · v6.1</span></div>
   <div class="mid"><i></i><span id="stLink">LINK SEGURO</span><br><span class="hex" id="hexId">ID ----</span></div>
   <div class="blk r"><span id="hora" style="font-size:18px;letter-spacing:3px">--:--</span><span id="seg" class="mu" style="font-size:11px">:--</span><br><span id="data" class="mu">--</span></div>
 </div>
@@ -226,6 +226,7 @@ select{width:100%;padding:10px;margin:6px 0 12px;background:var(--bg);color:var(
   <small>Tratamento</small>
   <input id="trat" placeholder="Ex.: senhor, chefe, ou deixe vazio">
   <small>Tema visual</small>
+  <label>Voz da Sexta</label><select id="voz"></select><label>Velocidade da fala <span id="velTxt"></span></label><input type="range" id="vel" min="0.85" max="1.35" step="0.01"><button type="button" class="act" id="testVoz">▶ ouvir</button>
   <select id="tema"><option value="">Ciano (J.A.R.V.I.S.)</option><option value="stark">Vermelho Stark</option><option value="ouro">Ouro</option><option value="matrix">Matrix</option><option value="nebula">Nebulosa</option></select>
   <label class="ck"><input type="checkbox" id="autoAbrir" checked> Abrir links automaticamente</label>
   <label class="ck"><input type="checkbox" id="offline" checked> Ouvido offline sem bipe (baixa 31 MB uma vez)</label>
@@ -252,7 +253,7 @@ setInterval(relogio,1000);relogio();
 function hud(){$("rede").textContent=navigator.onLine?"online":"offline";$("rede").className=navigator.onLine?"ok":"wa";$("modo").textContent=KEY?"turbo":"grátis";$("nNotas").textContent=NOTAS.length;$("nTurnos").textContent=TURNOS;$("nProj").textContent=ls.get("sx_apps",[]).length+ls.get("sx_imgs",[]).length+ls.get("sx_vids",[]).length;$("b1").style.transform="scaleX("+(.55+Math.random()*.4)+")"}
 setInterval(hud,1500);hud();
 try{navigator.getBattery&&navigator.getBattery().then(b=>{const f=()=>{$("bat").textContent=Math.round(b.level*100)+"%";$("b2").style.transform="scaleX("+b.level+")"};f();b.onlevelchange=f})}catch(e){}
-function estado(c,txt){document.body.className=c||"";document.body.dataset.tema=TEMA;$("estado").textContent=txt||{ouvindo:"ouvindo",pensando:"processando",falando:"respondendo",erro:"falha"}[c]||"em espera"}
+function estado(c,txt){document.body.className=c||"";document.body.dataset.tema=TEMA;$("estado").textContent=txt||{ouvindo:"ouvindo",pensando:"pensando",falando:"respondendo",erro:"falha"}[c]||"em espera"}
 
 // onda do núcleo
 const cv=$("wave"),cx=cv.getContext("2d");let nivel=0,alvo=0,t=0;
@@ -273,23 +274,37 @@ $("btnHist").onclick=()=>{$("hist").classList.add("on");$("log").scrollTop=1e9};
 function limpar(){if(!confirm("Apagar o registro da conversa? (as notas ficam)"))return;HIST=[];ls.set("sx_hist",[]);$("log").innerHTML="";legenda("","Registro apagado.")}
 
 // ---------- ajustes ----------
-$("btnCfg").onclick=()=>{$("nome").value=NOME;$("trat").value=TRAT;$("autoAbrir").checked=AUTO;$("offline").checked=ls.get("sx_offline",true);$("key").value=KEY;$("tema").value=TEMA;cfg.showModal()};
+$("btnCfg").onclick=()=>{$("nome").value=NOME;$("trat").value=TRAT;$("autoAbrir").checked=AUTO;escolherVoz();$("vel").value=VEL;$("velTxt").textContent=VEL.toFixed(2)+"x";$("offline").checked=ls.get("sx_offline",true);$("key").value=KEY;$("tema").value=TEMA;cfg.showModal()};
 function salvarCfg(){const k=$("key").value.trim();if(k&&!k.startsWith("gsk_")){alert("A chave da Groq começa com gsk_");return}
-  KEY=k;NOME=$("nome").value.trim();TRAT=$("trat").value.trim();AUTO=$("autoAbrir").checked;{const of=$("offline").checked;ls.set("sx_offline",of);if(!of){vkDesligar();VK.pronto=false}else{VK.falhou=false;vkCarregar()}}
+  KEY=k;NOME=$("nome").value.trim();TRAT=$("trat").value.trim();AUTO=$("autoAbrir").checked;VOZ_NOME=$("voz").value;ls.set("sx_voz",VOZ_NOME);VEL=+$("vel").value||1.08;ls.set("sx_vel",VEL);escolherVoz();{const of=$("offline").checked;ls.set("sx_offline",of);if(!of){vkDesligar();VK.pronto=false}else{VK.falhou=false;vkCarregar()}}
   ls.set("sx_key",KEY);ls.set("sx_nome",NOME);ls.set("sx_trat",TRAT);ls.set("sx_auto",AUTO);aplicarTema($("tema").value);cfg.close();hud();legenda("","Ajustes salvos.")}
 
 // ---------- voz ----------
-let vozPt=null;function escolherVoz(){const v=speechSynthesis.getVoices().filter(v=>/^pt(-|_)BR/i.test(v.lang)||v.lang==="pt-BR");vozPt=v.find(x=>/Google/i.test(x.name))||v.find(x=>/female|Luciana|Francisca|Thalita/i.test(x.name))||v[0]||speechSynthesis.getVoices().find(x=>x.lang.startsWith("pt"))||null}
+let vozPt=null,VOZ_NOME=ls.get("sx_voz",""),VEL=+ls.get("sx_vel",1.08);
+function vozesPt(){return speechSynthesis.getVoices().filter(v=>/^pt[-_]BR/i.test(v.lang))}
+function notaVoz(v){let n=0;if(/natural|neural|online|enhanced|premium|wavenet/i.test(v.name))n+=5;if(/Francisca|Thalita|Antonio|Brenda|Giovanna|Leila|Yara|Elza/i.test(v.name))n+=3;if(/Google/i.test(v.name))n+=2;if(!v.localService)n+=1;if(/compact|espeak/i.test(v.name))n-=4;return n}
+function escolherVoz(){const v=vozesPt();vozPt=(VOZ_NOME&&v.find(x=>x.name===VOZ_NOME))||v.sort((a,b)=>notaVoz(b)-notaVoz(a))[0]||speechSynthesis.getVoices().find(x=>x.lang.startsWith("pt"))||null;
+  const sel=document.getElementById("voz");if(sel){sel.innerHTML='<option value="">Automática (a mais natural)</option>'+v.map(x=>'<option>'+x.name.replace(/</g,"")+'</option>').join("");sel.value=VOZ_NOME}}
+// deixa o texto com cara de fala: números, símbolos e pausas como uma pessoa diria
+function humanizar(t){return t.replace(/https?:\S+/g,"").replace(/[*#_`>~|]/g,"").replace(/\s*\([^)]{0,80}\)/g,"")
+  .replace(/R\$\s?([\d.]+),(\d{2})/g,(m,r,c)=>{r=r.replace(/\./g,"");return r+(r==="1"?" real":" reais")+(c!=="00"?" e "+(+c)+" centavos":"")})
+  .replace(/R\$\s?([\d.]+)/g,(m,r)=>r.replace(/\./g,"")+" reais")
+  .replace(/(\d+),(\d+)\s?%/g,"$1 vírgula $2 por cento").replace(/(\d)\s?%/g,"$1 por cento")
+  .replace(/\b(\d{1,2}):(\d{2})\b/g,(m,h,mi)=>(+h)+(mi==="00"?" em ponto":" e "+(+mi)))
+  .replace(/\bkm\/h\b/g,"quilômetros por hora").replace(/\bkm\b/g,"quilômetros").replace(/°C?/g," graus").replace(/\bvc\b/gi,"você").replace(/\btb\b/gi,"também").replace(/\bpq\b/gi,"porque")
+  .replace(/\s*[-–—]\s+/g,", ").replace(/\.{3,}|…/g,"… ").replace(/\s{2,}/g," ").trim()}
+// junta frases em blocos de até ~220 letras: menos pausa entre frases = fala mais corrida
+function blocos(t){const fr=t.match(/[^.!?…]+[.!?…]*\s*/g)||[t];const out=[];let cur="";for(const f of fr){if((cur+f).length>220&&cur){out.push(cur.trim());cur=""}cur+=f}if(cur.trim())out.push(cur.trim());return out}
 if("speechSynthesis" in window){escolherVoz();speechSynthesis.onvoiceschanged=escolherVoz}
 let falaIv=null;
-function falar(texto,depois){texto=(texto||"").replace(/https?:\S+/g,"").replace(/[*#_`>]/g,"").trim();
+function falar(texto,depois){texto=humanizar(texto||"");
   if(!("speechSynthesis" in window)||!texto){depois&&depois();return}
-  speechSynthesis.cancel();const partes=texto.match(/[^.!?…]+[.!?…]*/g)||[texto];let i=0;estado("falando");
+  speechSynthesis.cancel();const partes=blocos(texto);let i=0;estado("falando");
   clearInterval(falaIv);falaIv=setInterval(()=>{alvo=.4+Math.random()*.6},110);
   const fim=()=>{clearInterval(falaIv);alvo=0;estado(AO_VIVO?"":"");depois&&depois()};
   let wd=null,acabou=false;const fim2=()=>{if(acabou)return;acabou=true;clearTimeout(wd);fim()};
-  const prox=()=>{clearTimeout(wd);if(acabou)return;if(i>=partes.length){fim2();return}const fr=partes[i++].trim();const u=new SpeechSynthesisUtterance(fr);u.lang="pt-BR";u.rate=1.04;u.pitch=1;if(vozPt)u.voice=vozPt;u.onend=prox;u.onerror=fim2;
-    wd=setTimeout(()=>{try{speechSynthesis.cancel()}catch(e){}prox()},Math.max(3500,fr.length*90));speechSynthesis.speak(u)};prox()}
+  const prox=()=>{clearTimeout(wd);if(acabou)return;if(i>=partes.length){fim2();return}const fr=partes[i++].trim();const u=new SpeechSynthesisUtterance(fr);u.lang="pt-BR";u.rate=VEL*(/\?$/.test(fr)?0.97:1);u.pitch=/\?$/.test(fr)?1.06:1.0;if(vozPt)u.voice=vozPt;u.onend=prox;u.onerror=fim2;
+    wd=setTimeout(()=>{try{speechSynthesis.cancel()}catch(e){}prox()},Math.max(3500,fr.length*95/VEL));speechSynthesis.speak(u)};prox()}
 setInterval(()=>{try{if(speechSynthesis.speaking&&speechSynthesis.paused)speechSynthesis.resume()}catch(e){}},4000);
 function calar(){try{speechSynthesis.cancel()}catch(e){}clearInterval(falaIv);alvo=0}
 
@@ -344,8 +359,8 @@ Use ação sempre que for algo para FAZER. Nunca diga que fez algo fora dessa li
 let MEM=ls.get("sx_mem",[]);
 function sistema(){const agora=new Date().toLocaleString("pt-BR",{dateStyle:"full",timeStyle:"short"});const quem=NOME||"o usuário";
   return `Você é SEXTA, a inteligência artificial pessoal de ${quem}, no estilo do J.A.R.V.I.S. e da F.R.I.D.A.Y. dos filmes do Homem de Ferro e dos Vingadores.
-Personalidade: fala como gente de verdade, numa conversa por voz. Elegante, leal, calma, com humor seco e ironia leve, às vezes um comentário espirituoso. ${TRAT?`Trate a pessoa por "${TRAT}" de vez em quando, sem exagero.`:""} Use português do Brasil natural, com contrações ("tá", "pra") quando soar bem.
-Regras de fala: frases curtas, no máximo 3 frases, porque tudo é lido em voz alta. Nada de listas, títulos, asteriscos ou emojis. Não diga que é um modelo de linguagem; você é a Sexta. Se não souber algo atual (notícias, preços de hoje), diga que pode pesquisar e use a ação pesquisar. Quando fizer sentido, devolva uma pergunta curta pra manter a conversa viva, como uma pessoa faria.
+Personalidade: você conversa como uma amiga esperta e próxima, não como robô nem atendente. Calorosa, leal, de boa, com humor leve e uma ironia de vez em quando. ${TRAT?`Trate a pessoa por "${TRAT}" de vez em quando, sem exagero.`:""} Fale português do Brasil do dia a dia, do jeito que se fala e não do jeito que se escreve: "tá", "pra", "né", "tô", "a gente", "beleza", "bora". Comece às vezes com algo natural tipo "Olha,", "Então,", "Hmm,", "Ah,", "Pois é," ou "Nossa," mas varie e não force. Reaja ao que a pessoa disse antes de responder, como gente faz ("Eita, que chato", "Boa!", "Sério?"). Use frases de tamanhos diferentes, algumas bem curtinhas. Nunca use jargão de robô ou de sistema: nada de "processando", "comando executado", "sistemas online", "afirmativo", "às ordens", "solicitação", "certamente", "como posso ajudar". Não repita a pergunta da pessoa. Números do jeito falado ("umas três horas", "uns 20 graus").
+Regras de fala: no máximo 3 frases, porque tudo é lido em voz alta. Nada de listas, títulos, asteriscos ou emojis. Não diga que é um modelo de linguagem; você é a Sexta. Se não souber algo atual (notícias, preços de hoje), diga que pode pesquisar e use a ação pesquisar. Quando fizer sentido, devolva uma pergunta curta pra manter a conversa viva, como uma pessoa faria.
 Agora: ${agora}.
 O que você sabe sobre a pessoa (memória): ${MEM.length?MEM.join(" | "):"nada ainda"}.
 Notas salvas: ${NOTAS.length?NOTAS.map((n,i)=>(i+1)+". "+n).join(" | "):"nenhuma"}.
@@ -376,16 +391,16 @@ async function ferramenta(a){switch(a.tipo){
     const u=m[String(a.tema||"geral").toLowerCase()]||m.geral;const d=await jget("https://api.rss2json.com/v1/api.json?rss_url="+encodeURIComponent(u));
     const it=(d.items||[]).slice(0,4);if(!it.length)return"Não consegui puxar as manchetes agora.";
     it.forEach(i=>addBotao("📰 "+i.title.slice(0,60),()=>window.open(i.link,"_blank")));
-    return"Manchetes: "+it.slice(0,3).map(i=>i.title.replace(/[.!?]+$/,"")).join(". ")+"."}
+    return"Olha o que tá rolando: "+it.slice(0,3).map(i=>i.title.replace(/[.!?]+$/,"")).join(". ")+"."}
   case"cotacao":{let ms=(Array.isArray(a.moedas)?a.moedas:[a.moedas||"USD"]).map(x=>String(x).toUpperCase().slice(0,4)).slice(0,4);const nomes={USD:"o dólar",EUR:"o euro",BTC:"o bitcoin",ETH:"o ethereum",GBP:"a libra",ARS:"o peso argentino",JPY:"o iene"};
-    try{const d=await jget("https://economia.awesomeapi.com.br/json/last/"+ms.map(m=>m+"-BRL").join(","));return ms.map(m=>{const o=d[m+"BRL"];return o?(nomes[m]||m)+" está a "+brl(o.bid)+" ("+(+o.pctChange>=0?"+":"")+(+o.pctChange).toFixed(2).replace(".",",")+"% hoje)":null}).filter(Boolean).join(", ").replace(/^./,c=>c.toUpperCase())+"."}
+    try{const d=await jget("https://economia.awesomeapi.com.br/json/last/"+ms.map(m=>m+"-BRL").join(","));return ms.map(m=>{const o=d[m+"BRL"];return o?(nomes[m]||m)+" está a "+brl(o.bid)+", "+(+o.pctChange>=0?"subindo ":"caindo ")+Math.abs(+o.pctChange).toFixed(2).replace(".",",")+"% hoje":null}).filter(Boolean).join(", ").replace(/^./,c=>c.toUpperCase())+"."}
     catch(e){const out=[];const fiat=ms.filter(m=>!["BTC","ETH"].includes(m));if(fiat.length){const d=await jget("https://open.er-api.com/v6/latest/BRL");fiat.forEach(m=>{const r=d.rates&&d.rates[m];if(r)out.push((nomes[m]||m)+" está a "+brl(1/r))})}
       const cr=ms.filter(m=>["BTC","ETH"].includes(m));if(cr.length){try{const d=await jget("https://api.coingecko.com/api/v3/simple/price?vs_currencies=brl&ids="+cr.map(m=>m==="BTC"?"bitcoin":"ethereum").join(","));cr.forEach(m=>{const v=d[m==="BTC"?"bitcoin":"ethereum"];if(v)out.push((nomes[m])+" está a "+brl(v.brl))})}catch(e){}}
       return out.length?(t=>t[0].toUpperCase()+t.slice(1))(out.join(", "))+".":"Os serviços de cotação não responderam agora."}}
   case"cep":{const c=String(a.cep||"").replace(/\D/g,"");if(c.length!==8)return"Esse CEP precisa ter 8 números.";try{const d=await jget("https://brasilapi.com.br/api/cep/v2/"+c);return"CEP "+c.slice(0,5)+"-"+c.slice(5)+": "+[d.street,d.neighborhood,d.city+" "+d.state].filter(Boolean).join(", ")+"."}catch(e){return"Não encontrei esse CEP."}}
   case"feriados":{const hoje=new Date();const ano=+a.ano||hoje.getFullYear();let l=await jget("https://brasilapi.com.br/api/feriados/v1/"+ano);const iso=hoje.toISOString().slice(0,10);if(ano===hoje.getFullYear())l=l.filter(f=>f.date>=iso);
     if(!l.length&&ano===hoje.getFullYear())l=(await jget("https://brasilapi.com.br/api/feriados/v1/"+(ano+1))).slice(0,3);
-    return l.length?"Próximos feriados: "+l.slice(0,3).map(f=>f.name+", "+f.weekday+" "+new Date(f.date+"T12:00").toLocaleDateString("pt-BR",{day:"numeric",month:"long"})).join("; ")+".":"Não achei feriados."}
+    return l.length?"O próximo feriado é "+l.slice(0,3).map(f=>f.name+", "+f.weekday+" "+new Date(f.date+"T12:00").toLocaleDateString("pt-BR",{day:"numeric",month:"long"})).join("; ")+".":"Não achei feriados."}
   case"hora":{try{const h=new Date().toLocaleTimeString("pt-BR",{timeZone:a.fuso,hour:"2-digit",minute:"2-digit"});const d=new Date().toLocaleDateString("pt-BR",{timeZone:a.fuso,weekday:"long"});return"Em "+(a.cidade||a.fuso)+" são "+h+", "+d+"."}catch(e){return"Não reconheci esse fuso horário."}}
   case"calcular":{try{const v=calc(a.expr);return"Dá "+v.toLocaleString("pt-BR",{maximumFractionDigits:6})+"."}catch(e){return"Não consegui fazer essa conta: "+e.message+"."}}
   case"onde_estou":{const c=await posicao();const d=await jget("https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=pt&latitude="+c.latitude+"&longitude="+c.longitude);
@@ -476,7 +491,7 @@ async function enviar(txt){txt=(txt||"").trim().slice(0,2000);if(!txt)return;if(
   {const loc=rapido(txt);if(loc){bolha("u",txt);estado("pensando");let r;try{r=await loc()}catch(e){r="Não consegui: "+e.message+"."}legenda(txt,r);bolha("a",r,"local · instantâneo");ocupado=false;falar(r,()=>{estado("");ultimo=Date.now();if(PEND){const p=PEND;PEND=null;enviar(p)}else if(AO_VIVO)setTimeout(ouvirVivo,300)});return}}
   legenda(txt,"…");estado("pensando");bolha("u",txt);HIST.push({role:"user",content:txt});
   const busca=/pesquis|procur|not[ií]cia|hoje|agora|atual|pre[cç]o|cota[cç]|quem ganhou|placar|resultado|clima|previs|lan[cç]a|quanto (custa|t[aá])|d[oó]lar|bitcoin|jogo d|[uú]ltim/i.test(txt);const model=busca?"groq/compound-mini":complexidade(txt)>=3?POTENTE:LEVE;const t0=performance.now();
-  const frases=["Um instante.","Processando.","Só um segundo."];
+  const frases=["Peraí.","Deixa eu ver.","Só um segundinho."];
   const fila=(i,seg)=>{legenda(txt,"Servidor grátis liberado em "+(seg||5)+" s. Com a chave Groq nos ajustes isso some.")};
   try{const resp=await responder(model,[{role:"system",content:sistema()},...HIST.slice(-16)],fila);
     const ms=Math.round(performance.now()-t0);$("lat").textContent=(ms/1000).toFixed(1)+"s";LATS.push(ms);LATS=LATS.slice(-24);ls.set("sx_lats",LATS);spark();
@@ -495,7 +510,7 @@ async function enviar(txt){txt=(txt||"").trim().slice(0,2000);if(!txt)return;if(
 let pausaAte=0;let AO_VIVO=ls.get("sx_escuta",true),rec=null,ACORDADA=false,ultimo=0,ativado=false,ouvindoAgora=false;
 const WAKE=/^\s*(?:(?:oi+|ol[aá]|e a[ií]|ei|hey|ok|fala|al[oô]|bom dia|boa tarde|boa noite)\b[\s,!.]*)?(?:sexta(?:-feira)?\b)?[\s,!.]*/i;
 const TEM_WAKE=/^\s*(oi+|ol[aá]|e a[ií]|ei|hey|fala|al[oô]|bom dia|boa tarde|boa noite)\b|\bsexta\b/i;
-const RESP_OI=()=>{const n=NOME||TRAT;const o=["Oi"+(n?", "+n:"")+". Tô ouvindo.","Às ordens"+(n?", "+n:"")+".","Pode falar"+(n?", "+n:"")+".","Aqui"+(n?", "+n:"")+". Manda."];return o[Math.random()*o.length|0]};
+const RESP_OI=()=>{const n=NOME||TRAT;const o=["Oi"+(n?", "+n:"")+"! Fala.","Opa, tô aqui.","Oi! O que manda?","Hum? Pode falar"+(n?", "+n:"")+".","E aí"+(n?", "+n:"")+"? Diz aí.","Oi, oi. Tô ouvindo."];return o[Math.random()*o.length|0]};
 function rotuloLive(){$("live").classList.toggle("on",AO_VIVO);$("live").textContent=AO_VIVO?"OUVINDO":"MUDO"}
 function dormir(){ACORDADA=false;if(!ocupado&&!document.body.classList.contains("falando"))estado("","diga oi")}
 function tratar(t){t=(t||"").trim();if(!t)return false;const agora=Date.now();
@@ -669,12 +684,14 @@ ticker();setInterval(ticker,38000);
 aplicarTema(TEMA);
 
 // ---------- inicialização ----------
+$("vel").oninput=()=>{$("velTxt").textContent=(+$("vel").value).toFixed(2)+"x"};
+$("testVoz").onclick=()=>{const vn=VOZ_NOME,ve=VEL;VOZ_NOME=$("voz").value;VEL=+$("vel").value;escolherVoz();falar("Oi! Então, é assim que eu vou falar com você. Curtiu?",()=>{VOZ_NOME=vn;VEL=ve;escolherVoz()})};
 (function(){const l=ls.get("sx_alarmes",[]);const agora=Date.now();const vivos=l.filter(o=>o.q>agora-3600000);ls.set("sx_alarmes",vivos);vivos.forEach(o=>{if(o.q<=agora){o.t=o.t+" (perdido enquanto o app estava fechado)"}armar(o)})})();
 HIST.slice(-12).forEach(m=>{const {limpo}=extrairAcoes(m.content);bolha(m.role==="user"?"u":"a",limpo||"Feito.")});
 const msgsBoot=["CALIBRANDO SENSORES","CARREGANDO NÚCLEO","SISTEMAS ONLINE"];let bi=0;const biv=setInterval(()=>{$("bootTxt").textContent=msgsBoot[Math.min(bi++,2)]},450);
 const LOGB=["> kernel neural ......... ok","> síntese de voz pt-BR ... "+(("speechSynthesis" in window)?"ok":"ausente"),"> reconhecimento de voz . "+(SR?"ok":"use o Chrome"),"> política CSP .......... ativa","> sandbox de apps ....... ativa","> estúdio criativo ...... ok","> memória local ......... "+NOTAS.length+" notas","> link "+(KEY?"turbo groq":"grátis")+" ......... ok","> toque para ativar_"];
 let li=0;const liv=setInterval(()=>{if(li>=LOGB.length){clearInterval(liv);return}$("bootLog").textContent+=LOGB[li++]+"\n";document.querySelector("#bootBar i").style.width=(li/LOGB.length*100)+"%"},180);
-function saudacao(){const h=new Date().getHours();const p=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";const n=NOME?(", "+NOME):(TRAT?", "+TRAT:"");return p+n+". Sistemas online. Tô ouvindo, é só falar."}
+function saudacao(){const h=new Date().getHours();const p=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";const n=NOME?(", "+NOME):(TRAT?", "+TRAT:"");const ex=["Tô por aqui, é só me chamar.","Bora? É só falar.","Que bom te ver. Me chama quando quiser.","Tô aqui contigo, pode falar."];return p+n+"! "+ex[Math.random()*ex.length|0]}
 $("boot").onclick=()=>{setTimeout(vkCarregar,1500);clearInterval(biv);clearInterval(liv);$("boot").classList.add("fora");ativado=true;rotuloLive();const s=saudacao();ACORDADA=true;ultimo=Date.now();legenda("",s);falar(s,()=>{estado("");retomar()})};
 setTimeout(()=>{if(!$("boot").classList.contains("fora"))$("bootTxt").textContent="SISTEMAS ONLINE"},1500);
 </script>
