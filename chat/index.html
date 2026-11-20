@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#01060c">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.open-meteo.com https://api.groq.com https://text.pollinations.ai https://image.pollinations.ai; img-src 'self' data: blob: https://image.pollinations.ai; media-src 'self' blob: data:; frame-src blob: data: about:; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self' blob:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://pt.wikipedia.org https://brasilapi.com.br https://economia.awesomeapi.com.br https://open.er-api.com https://api.coingecko.com https://api.rss2json.com https://api.bigdatacloud.net https://api.open-meteo.com https://api.groq.com https://text.pollinations.ai https://image.pollinations.ai; img-src 'self' data: blob: https://image.pollinations.ai https://api.qrserver.com; media-src 'self' blob: data:; frame-src blob: data: about:; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self' blob:">
 <meta name="referrer" content="no-referrer">
 <title>SEXTA · Sistema v5</title>
 <link rel="manifest" href="manifest.json">
@@ -145,7 +145,7 @@ select{width:100%;padding:10px;margin:6px 0 12px;background:var(--bg);color:var(
 <div id="boot"><b>S.E.X.T.A.</b><span id="bootTxt">INICIALIZANDO SISTEMAS</span><div id="bootBar"><i></i></div><pre id="bootLog"></pre><span class="mu" style="font-size:10px;letter-spacing:1.5px;text-align:center;padding:0 24px">toque uma vez para ativar<br>depois é só dizer "oi"</span></div>
 
 <div id="top">
-  <div class="blk"><b>SEXTA</b><span class="mu" style="font-size:9px;white-space:nowrap">sistema · v5</span></div>
+  <div class="blk"><b>SEXTA</b><span class="mu" style="font-size:9px;white-space:nowrap">sistema · v6</span></div>
   <div class="mid"><i></i><span id="stLink">LINK SEGURO</span><br><span class="hex" id="hexId">ID ----</span></div>
   <div class="blk r"><span id="hora" style="font-size:18px;letter-spacing:3px">--:--</span><span id="seg" class="mu" style="font-size:11px">:--</span><br><span id="data" class="mu">--</span></div>
 </div>
@@ -196,6 +196,7 @@ select{width:100%;padding:10px;margin:6px 0 12px;background:var(--bg);color:var(
   <button data-k="clima"><b>☁</b>clima</button>
   <button data-k="foco"><b>◷</b>foco 25</button>
   <button data-k="tema"><b>◐</b>tema</button>
+  <button data-k="cmd"><b>⌘</b>comandos</button>
 </div>
 <div id="ticker"><span id="tickTxt">SEXTA ONLINE</span></div>
 
@@ -316,13 +317,37 @@ Tipos:
 - {"tipo":"projetos"} abre a galeria de projetos (apps, imagens e vídeos já criados)
 - {"tipo":"foco","minutos":N} inicia um ciclo de foco (pomodoro)
 - {"tipo":"tema","nome":"ciano|stark|ouro|matrix|nebula"} muda o visual
+FERRAMENTAS DE CONSULTA (o app busca o dado de verdade e lê em voz alta logo depois da sua frase; então escreva só uma frase curtinha tipo "Vendo agora." e a ação, sem inventar o resultado):
+- {"tipo":"wiki","q":"assunto"} resumo da Wikipédia (pessoas, lugares, história, ciência, "o que é")
+- {"tipo":"noticias","tema":"geral|economia|esporte|tecnologia|mundo|politica"} manchetes de agora (g1)
+- {"tipo":"cotacao","moedas":["USD","EUR","BTC"]} cotação em reais
+- {"tipo":"cep","cep":"00000000"} endereço de um CEP
+- {"tipo":"feriados","ano":AAAA} próximos feriados nacionais
+- {"tipo":"hora","fuso":"Area/Cidade IANA","cidade":"nome"} hora agora em outra cidade
+- {"tipo":"calcular","expr":"expressão com + - * / ^ % ( )"} conta exata
+- {"tipo":"onde_estou"} cidade e bairro aproximados de onde a pessoa está
+- {"tipo":"bateria"} nível da bateria do celular
+- {"tipo":"sortear","de":["opção1","opção2"]} ou {"tipo":"sortear","dado":6} ou {"tipo":"sortear","moeda":true}
+- {"tipo":"memoria_listar"} o que você lembra da pessoa
+AÇÕES EXTRAS:
+- {"tipo":"memorizar","fato":"fato curto sobre a pessoa"} guarda pra sempre (gostos, nomes, rotina) quando ela contar algo pessoal ou pedir pra lembrar
+- {"tipo":"esquecer","fato":"trecho"} apaga da memória
+- {"tipo":"agenda","titulo":"...","inicio":"AAAA-MM-DDTHH:MM","duracao_min":N,"local":"..."} cria evento no Google Agenda
+- {"tipo":"lanterna","ligar":true|false}
+- {"tipo":"qrcode","texto":"..."} gera QR code
+- {"tipo":"compartilhar","texto":"..."} abre o menu de compartilhar do celular
+- {"tipo":"spotify","q":"..."} busca música no Spotify
+- {"tipo":"traduzir","texto":"texto já traduzido","idioma":"en|es|fr|it|de|ja"} lê o texto em voz alta com pronúncia do idioma
+- {"tipo":"comandos"} mostra tudo o que você sabe fazer
 Para imagem, app ou vídeo, responda só uma frase curta tipo "Gerando agora" e coloque a ação.
 Use ação sempre que for algo para FAZER. Nunca diga que fez algo fora dessa lista; se for impossível (mexer em configurações do celular, comprar, ler arquivos, filmar vídeo realista tipo cinema), diga com naturalidade e ofereça o mais próximo.`;
+let MEM=ls.get("sx_mem",[]);
 function sistema(){const agora=new Date().toLocaleString("pt-BR",{dateStyle:"full",timeStyle:"short"});const quem=NOME||"o usuário";
   return `Você é SEXTA, a inteligência artificial pessoal de ${quem}, no estilo do J.A.R.V.I.S. e da F.R.I.D.A.Y. dos filmes do Homem de Ferro e dos Vingadores.
 Personalidade: fala como gente de verdade, numa conversa por voz. Elegante, leal, calma, com humor seco e ironia leve, às vezes um comentário espirituoso. ${TRAT?`Trate a pessoa por "${TRAT}" de vez em quando, sem exagero.`:""} Use português do Brasil natural, com contrações ("tá", "pra") quando soar bem.
 Regras de fala: frases curtas, no máximo 3 frases, porque tudo é lido em voz alta. Nada de listas, títulos, asteriscos ou emojis. Não diga que é um modelo de linguagem; você é a Sexta. Se não souber algo atual (notícias, preços de hoje), diga que pode pesquisar e use a ação pesquisar. Quando fizer sentido, devolva uma pergunta curta pra manter a conversa viva, como uma pessoa faria.
 Agora: ${agora}.
+O que você sabe sobre a pessoa (memória): ${MEM.length?MEM.join(" | "):"nada ainda"}.
 Notas salvas: ${NOTAS.length?NOTAS.map((n,i)=>(i+1)+". "+n).join(" | "):"nenhuma"}.
 ${ACOES_DESC}`}
 
@@ -332,6 +357,51 @@ function agendar(quando,txt){const l=ls.get("sx_alarmes",[]);const id=Math.rando
 function armar(o){setTimeout(()=>{const l=ls.get("sx_alarmes",[]);if(!l.some(x=>x.id===o.id))return;ls.set("sx_alarmes",l.filter(x=>x.id!==o.id));notificar(o.t)},Math.max(0,o.q-Date.now()))}
 function pedirNotif(){try{"Notification" in window&&Notification.permission==="default"&&Notification.requestPermission()}catch(e){}}
 
+// ---------- ferramentas de consulta (buscam dado real e devolvem texto pra falar) ----------
+const FERR=new Set(["wiki","noticias","cotacao","cep","feriados","hora","calcular","onde_estou","bateria","sortear","memoria_listar"]);
+async function jget(u,ms=12000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(u,{signal:c.signal});if(!r.ok)throw new Error("HTTP "+r.status);return await r.json()}finally{clearTimeout(t)}}
+const brl=v=>"R$ "+(+v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+function calc(e){e=String(e||"").replace(/,/g,".").replace(/x|×/gi,"*").replace(/÷/g,"/").replace(/\^/g,"**").replace(/(\d+(?:\.\d+)?)\s*%\s*de\s*/gi,"($1/100)*").replace(/\s+/g,"");
+  if(!/^[\d.+\-*/()%]+$/.test(e)||e.length>120)throw new Error("conta inválida");const v=Function('"use strict";return('+e+')')();if(!isFinite(v))throw new Error("resultado indefinido");return Math.round(v*1e10)/1e10}
+function posicao(){return new Promise((ok,no)=>{if(!navigator.geolocation)return no(new Error("sem GPS"));navigator.geolocation.getCurrentPosition(p=>ok(p.coords),e=>no(new Error("localização negada")),{timeout:12000,maximumAge:300000})})}
+async function ferramenta(a){switch(a.tipo){
+  case"wiki":{const q=String(a.q||"").trim();const s=await jget("https://pt.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch="+encodeURIComponent(q));
+    const h=s.query&&s.query.search&&s.query.search[0];if(!h)return"Não achei nada sobre "+q+" na Wikipédia.";
+    const d=await jget("https://pt.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(h.title.replace(/ /g,"_")));
+    const fr=(d.extract||"").replace(/\s*\([^)]*\)/g,"").split(/(?<=[.!?])\s+/).slice(0,3).join(" ");
+    if(d.content_urls&&d.content_urls.mobile)addBotao("Ler na Wikipédia",()=>window.open(d.content_urls.mobile.page,"_blank"));
+    if(d.thumbnail&&d.thumbnail.source){/* imagem não permitida pelo CSP fora do pollinations; só link */}
+    return fr||"Achei a página "+h.title+", mas sem resumo."}
+  case"noticias":{const m={geral:"https://g1.globo.com/rss/g1/",economia:"https://g1.globo.com/rss/g1/economia/",esporte:"https://ge.globo.com/rss/ge/",tecnologia:"https://g1.globo.com/rss/g1/tecnologia/",mundo:"https://g1.globo.com/rss/g1/mundo/",politica:"https://g1.globo.com/rss/g1/politica/"};
+    const u=m[String(a.tema||"geral").toLowerCase()]||m.geral;const d=await jget("https://api.rss2json.com/v1/api.json?rss_url="+encodeURIComponent(u));
+    const it=(d.items||[]).slice(0,4);if(!it.length)return"Não consegui puxar as manchetes agora.";
+    it.forEach(i=>addBotao("📰 "+i.title.slice(0,60),()=>window.open(i.link,"_blank")));
+    return"Manchetes: "+it.slice(0,3).map(i=>i.title.replace(/[.!?]+$/,"")).join(". ")+"."}
+  case"cotacao":{let ms=(Array.isArray(a.moedas)?a.moedas:[a.moedas||"USD"]).map(x=>String(x).toUpperCase().slice(0,4)).slice(0,4);const nomes={USD:"o dólar",EUR:"o euro",BTC:"o bitcoin",ETH:"o ethereum",GBP:"a libra",ARS:"o peso argentino",JPY:"o iene"};
+    try{const d=await jget("https://economia.awesomeapi.com.br/json/last/"+ms.map(m=>m+"-BRL").join(","));return ms.map(m=>{const o=d[m+"BRL"];return o?(nomes[m]||m)+" está a "+brl(o.bid)+" ("+(+o.pctChange>=0?"+":"")+(+o.pctChange).toFixed(2).replace(".",",")+"% hoje)":null}).filter(Boolean).join(", ").replace(/^./,c=>c.toUpperCase())+"."}
+    catch(e){const out=[];const fiat=ms.filter(m=>!["BTC","ETH"].includes(m));if(fiat.length){const d=await jget("https://open.er-api.com/v6/latest/BRL");fiat.forEach(m=>{const r=d.rates&&d.rates[m];if(r)out.push((nomes[m]||m)+" está a "+brl(1/r))})}
+      const cr=ms.filter(m=>["BTC","ETH"].includes(m));if(cr.length){try{const d=await jget("https://api.coingecko.com/api/v3/simple/price?vs_currencies=brl&ids="+cr.map(m=>m==="BTC"?"bitcoin":"ethereum").join(","));cr.forEach(m=>{const v=d[m==="BTC"?"bitcoin":"ethereum"];if(v)out.push((nomes[m])+" está a "+brl(v.brl))})}catch(e){}}
+      return out.length?(t=>t[0].toUpperCase()+t.slice(1))(out.join(", "))+".":"Os serviços de cotação não responderam agora."}}
+  case"cep":{const c=String(a.cep||"").replace(/\D/g,"");if(c.length!==8)return"Esse CEP precisa ter 8 números.";try{const d=await jget("https://brasilapi.com.br/api/cep/v2/"+c);return"CEP "+c.slice(0,5)+"-"+c.slice(5)+": "+[d.street,d.neighborhood,d.city+" "+d.state].filter(Boolean).join(", ")+"."}catch(e){return"Não encontrei esse CEP."}}
+  case"feriados":{const hoje=new Date();const ano=+a.ano||hoje.getFullYear();let l=await jget("https://brasilapi.com.br/api/feriados/v1/"+ano);const iso=hoje.toISOString().slice(0,10);if(ano===hoje.getFullYear())l=l.filter(f=>f.date>=iso);
+    if(!l.length&&ano===hoje.getFullYear())l=(await jget("https://brasilapi.com.br/api/feriados/v1/"+(ano+1))).slice(0,3);
+    return l.length?"Próximos feriados: "+l.slice(0,3).map(f=>f.name+", "+f.weekday+" "+new Date(f.date+"T12:00").toLocaleDateString("pt-BR",{day:"numeric",month:"long"})).join("; ")+".":"Não achei feriados."}
+  case"hora":{try{const h=new Date().toLocaleTimeString("pt-BR",{timeZone:a.fuso,hour:"2-digit",minute:"2-digit"});const d=new Date().toLocaleDateString("pt-BR",{timeZone:a.fuso,weekday:"long"});return"Em "+(a.cidade||a.fuso)+" são "+h+", "+d+"."}catch(e){return"Não reconheci esse fuso horário."}}
+  case"calcular":{try{const v=calc(a.expr);return"Dá "+v.toLocaleString("pt-BR",{maximumFractionDigits:6})+"."}catch(e){return"Não consegui fazer essa conta: "+e.message+"."}}
+  case"onde_estou":{const c=await posicao();const d=await jget("https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=pt&latitude="+c.latitude+"&longitude="+c.longitude);
+    addBotao("Ver no mapa",()=>window.open("https://www.google.com/maps/search/?api=1&query="+c.latitude+","+c.longitude,"_blank"));
+    return"Você está "+(d.locality&&d.locality!==d.city?"perto de "+d.locality+", ":"em ")+(d.city||"um lugar sem nome no mapa")+(d.principalSubdivision?", "+d.principalSubdivision:"")+". Precisão de uns "+Math.round(c.accuracy)+" metros."}
+  case"bateria":{if(!navigator.getBattery)return"Esse navegador não mostra a bateria.";const b=await navigator.getBattery();return"Bateria em "+Math.round(b.level*100)+"%"+(b.charging?", carregando.":".")}
+  case"sortear":{if(a.moeda)return Math.random()<.5?"Deu cara.":"Deu coroa.";if(a.dado){const n=Math.max(2,Math.min(1000,+a.dado||6));return"Deu "+(1+Math.floor(Math.random()*n))+"."}
+    const l=(a.de||[]).filter(Boolean);return l.length?"Escolhi: "+l[Math.floor(Math.random()*l.length)]+".":"Me diz as opções pra sortear."}
+  case"memoria_listar":return MEM.length?"Eu lembro que: "+MEM.slice(-8).join("; ")+".":"Ainda não guardei nada sobre você. É só me contar."}
+  return""}
+let TORCH=null;
+async function lanterna(on){try{if(!on){if(TORCH){TORCH.getTracks().forEach(t=>t.stop());TORCH=null}return"Lanterna desligada."}
+  if(!TORCH){if(VK&&VK.ligado)vkDesligar();TORCH=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}})}const tr=TORCH.getVideoTracks()[0];const cap=tr.getCapabilities?tr.getCapabilities():{};
+  if(!cap.torch){TORCH.getTracks().forEach(t=>t.stop());TORCH=null;return"Esse celular não deixa o Chrome ligar a lanterna."}await tr.applyConstraints({advanced:[{torch:true}]});return"Lanterna ligada. Deixa o app aberto que ela fica acesa."}
+  catch(e){TORCH=null;return"Não consegui a câmera pra lanterna. Libere a permissão da câmera."}}
+const COMANDOS=["\"oi Sexta\" e depois o pedido","que horas são em Tóquio","quanto tá o dólar / o bitcoin","quais as notícias de hoje","me fala sobre Santos Dumont","quanto é 15% de 320","qual o CEP 01310-100","quando é o próximo feriado","onde eu estou","como tá o tempo","liga a lanterna","quanto de bateria tenho","cara ou coroa / joga um dado","lembra que eu gosto de café sem açúcar","o que você lembra de mim","marca dentista sexta às 15h na agenda","me lembra de beber água em 30 minutos","timer de 10 minutos / modo foco","anota: comprar pão","cria uma imagem de um dragão de neon","cria um app de lista de compras","faz um vídeo sobre o espaço","manda no WhatsApp: tô chegando","toca Henrique e Juliano no Spotify","como se diz bom dia em japonês","gera um QR code do meu Pix","muda pro tema Stark","abre meus projetos"];
 function executar(a,bol){const enc=encodeURIComponent;let url=null,rot=null;const meta=t=>{addInfo(t);bol&&(bol.querySelector(".meta")||bol).appendChild(document.createTextNode("\n"+t))};
   switch(a.tipo){
     case"abrir":url=/^https:\/\//i.test(a.url||"")?a.url:null;rot="Abrir site";break;
@@ -354,6 +424,18 @@ function executar(a,bol){const enc=encodeURIComponent;let url=null,rot=null;cons
     case"clima":clima(true);return;
     case"projetos":abrirProj();return;
     case"foco":executar({tipo:"timer",segundos:Math.max(1,+a.minutos||25)*60,rotulo:"Foco"});return;
+    case"memorizar":{const f=String(a.fato||"").trim().slice(0,200);if(f&&!MEM.includes(f)){MEM.push(f);MEM=MEM.slice(-40);ls.set("sx_mem",MEM)}meta("🧠 vou lembrar: "+f);return}
+    case"esquecer":{const f=String(a.fato||"").toLowerCase();const n=MEM.length;MEM=f?MEM.filter(m=>!m.toLowerCase().includes(f)):[];ls.set("sx_mem",MEM);meta("🧠 esqueci "+(n-MEM.length)+" item(ns)");return}
+    case"agenda":{const ini=new Date(a.inicio||Date.now());if(isNaN(ini))return;const fim=new Date(ini.getTime()+(+a.duracao_min||60)*60000);const z=d=>d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
+      url="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+enc(a.titulo||"Evento")+"&dates="+z(ini)+"/"+z(fim)+(a.local?"&location="+enc(a.local):"");rot="Salvar na agenda";break}
+    case"lanterna":lanterna(a.ligar!==false).then(t=>{meta("🔦 "+t);if(/não/i.test(t))falar(t)});return;
+    case"qrcode":{const im=document.createElement("img");im.src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data="+enc(a.texto||"");im.alt="QR code";im.style.cssText="width:180px;height:180px;background:#fff;border-radius:8px;display:block;margin:6px auto";$("acoes").appendChild(im);return}
+    case"compartilhar":if(navigator.share)addBotao("Compartilhar",()=>navigator.share({text:a.texto||""}).catch(()=>{}));else executar({tipo:"copiar",texto:a.texto},bol);return;
+    case"spotify":url="https://open.spotify.com/search/"+enc(a.q||"");rot="Abrir Spotify";break;
+    case"traduzir":{const t=String(a.texto||"");const lg={en:"en-US",es:"es-ES",fr:"fr-FR",it:"it-IT",de:"de-DE",ja:"ja-JP",zh:"zh-CN",ko:"ko-KR"}[a.idioma]||a.idioma||"en-US";meta("🌐 "+t);
+      addBotao("🔊 Ouvir de novo",()=>{const u=new SpeechSynthesisUtterance(t);u.lang=lg;const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.startsWith(lg.slice(0,2)));if(v)u.voice=v;speechSynthesis.speak(u)});
+      setTimeout(()=>{const u=new SpeechSynthesisUtterance(t);u.lang=lg;const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.startsWith(lg.slice(0,2)));if(v)u.voice=v;const esp=()=>{if(document.body.classList.contains("falando"))return setTimeout(esp,400);speechSynthesis.speak(u)};esp()},600);return}
+    case"comandos":abrirComandos();return;
     case"tema":{const m={ciano:"",stark:"stark",ouro:"ouro",matrix:"matrix",nebula:"nebula"};aplicarTema(m[String(a.nome||"").toLowerCase()]??"");meta("◐ tema "+(a.nome||"ciano"));return}
     default:return}
   if(url&&/^(https?:|mailto:|tel:)/.test(url)){addBotao(rot,()=>window.open(url,"_blank"));if(AUTO&&/^https?:/.test(url))try{window.open(url,"_blank")}catch(e){}}}
@@ -375,16 +457,35 @@ async function responder(model,msgs,fila,maxTok){if(KEY){try{return await groq(m
 
 let ocupado=false;
 let PEND=null;
+// comandos instantâneos, sem gastar a IA
+function rapido(t){const s=t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[?!.,]/g,"").trim();
+  if(/^(que horas sao|que hora e essa|me diz as horas|horas)$/.test(s))return async()=>"São "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})+".";
+  if(/^(que dia e hoje|qual a data de hoje|que dia e hj)$/.test(s))return async()=>"Hoje é "+new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+".";
+  if(/^(liga|ligar|acende|acender) (a )?lanterna$/.test(s))return()=>lanterna(true);
+  if(/^(desliga|desligar|apaga|apagar) (a )?lanterna$/.test(s))return()=>lanterna(false);
+  if(/^(bateria|quanto (de|tem de|ta a) bateria|como (esta|ta) a bateria)/.test(s))return()=>ferramenta({tipo:"bateria"});
+  if(/^cara ou coroa$/.test(s))return()=>ferramenta({tipo:"sortear",moeda:true});
+  if(/^(joga|jogar|rola|rolar) (um )?dado$/.test(s))return()=>ferramenta({tipo:"sortear",dado:6});
+  if(/^(comandos|ajuda|o que voce (sabe|consegue) fazer|lista de comandos)$/.test(s))return async()=>{abrirComandos();return"Abri a lista. Dá pra pedir qualquer uma por voz."};
+  const m=s.match(/^(quanto e|calcula|calcule)\s+(.+)$/);if(m&&/^[\d\s.,+\-x*/()%^]+(de\s*[\d.,]+)?$/.test(m[2]))return async()=>ferramenta({tipo:"calcular",expr:m[2]});
+  if(/^onde (eu )?estou$/.test(s))return()=>ferramenta({tipo:"onde_estou"});
+  return null}
+function abrirComandos(){let d=$("cmdDlg");if(!d){d=document.createElement("dialog");d.id="cmdDlg";d.innerHTML='<h3 style="margin:0 0 8px;letter-spacing:2px">COMANDOS</h3><div id="cmdList" style="max-height:60vh;overflow:auto;font-size:13px;line-height:1.5"></div><div style="text-align:right;margin-top:10px"><button class="act" id="cmdFechar">fechar</button></div>';document.body.appendChild(d);
+  d.querySelector("#cmdFechar").onclick=()=>d.close();const l=d.querySelector("#cmdList");COMANDOS.forEach(c=>{const b=document.createElement("button");b.className="act";b.style.cssText="display:block;width:100%;text-align:left;margin:4px 0";b.textContent="› "+c;b.onclick=()=>{d.close();if(!c.startsWith("\""))enviar(c.split(" / ")[0])};l.appendChild(b)})}d.showModal()}
 async function enviar(txt){txt=(txt||"").trim().slice(0,2000);if(!txt)return;if(ocupado){PEND=txt;addInfo("⏳ na fila: "+txt.slice(0,60));return}ocupado=true;calar();limparAcoes();
+  {const loc=rapido(txt);if(loc){bolha("u",txt);estado("pensando");let r;try{r=await loc()}catch(e){r="Não consegui: "+e.message+"."}legenda(txt,r);bolha("a",r,"local · instantâneo");ocupado=false;falar(r,()=>{estado("");ultimo=Date.now();if(PEND){const p=PEND;PEND=null;enviar(p)}else if(AO_VIVO)setTimeout(ouvirVivo,300)});return}}
   legenda(txt,"…");estado("pensando");bolha("u",txt);HIST.push({role:"user",content:txt});
   const busca=/pesquis|procur|not[ií]cia|hoje|agora|atual|pre[cç]o|cota[cç]|quem ganhou|placar|resultado|clima|previs|lan[cç]a|quanto (custa|t[aá])|d[oó]lar|bitcoin|jogo d|[uú]ltim/i.test(txt);const model=busca?"groq/compound-mini":complexidade(txt)>=3?POTENTE:LEVE;const t0=performance.now();
   const frases=["Um instante.","Processando.","Só um segundo."];
   const fila=(i,seg)=>{legenda(txt,"Servidor grátis liberado em "+(seg||5)+" s. Com a chave Groq nos ajustes isso some.")};
   try{const resp=await responder(model,[{role:"system",content:sistema()},...HIST.slice(-16)],fila);
     const ms=Math.round(performance.now()-t0);$("lat").textContent=(ms/1000).toFixed(1)+"s";LATS.push(ms);LATS=LATS.slice(-24);ls.set("sx_lats",LATS);spark();
-    const {limpo,acoes}=extrairAcoes(resp);const fala=limpo||"Feito.";
+    const {limpo,acoes}=extrairAcoes(resp);let fala=limpo||"Feito.";
     HIST.push({role:"assistant",content:resp});ls.set("sx_hist",HIST.slice(-40));TURNOS++;hud();
-    legenda(txt,fala);const b=bolha("a",fala,(KEY?"turbo":"grátis")+" · "+(ms/1000).toFixed(1)+" s");acoes.forEach(a=>executar(a,b));
+    const ferr=acoes.filter(a=>FERR.has(a.tipo)),resto=acoes.filter(a=>!FERR.has(a.tipo));
+    if(ferr.length){legenda(txt,fala);estado("pensando");const rs=await Promise.all(ferr.map(a=>ferramenta(a).catch(e=>"Não consegui: "+e.message+".")));const r=rs.filter(Boolean).join(" ");
+      if(r){fala=(limpo&&limpo.length<40?"":limpo+" ")+r;HIST[HIST.length-1].content+="\n[resultado: "+r.slice(0,600)+"]";ls.set("sx_hist",HIST.slice(-40))}}
+    legenda(txt,fala);const b=bolha("a",fala,(KEY?"turbo":"grátis")+" · "+(ms/1000).toFixed(1)+" s");resto.forEach(a=>executar(a,b));
     ocupado=false;falar(fala,()=>{estado("");ultimo=Date.now();if(PEND){const p=PEND;PEND=null;enviar(p)}else if(AO_VIVO)setTimeout(ouvirVivo,300)})}
   catch(e){HIST.pop();ocupado=false;PEND=null;estado("erro");const m="Tive um problema: "+e.message+".";legenda(txt,m);bolha("a","⚠ "+m);falar(m,()=>{estado("");if(AO_VIVO)setTimeout(ouvirVivo,800)})}}
 
@@ -528,7 +629,7 @@ $("crGo").onclick=async()=>{const t=$("crTxt").value.trim().slice(0,2000);if(!t)
   else if(crTipo==="video")criarVideo({tema:t,cenas:5});
   else{estudio("IMAGEM");estStatus("Refinando o prompt…");let p=t;try{p=await responder(LEVE,[{role:"system",content:"Transforme o pedido numa descrição visual em inglês, muito detalhada e cinematográfica (luz, câmera, estilo, cores), em uma única linha, sem aspas."},{role:"user",content:t}],null,300)}catch(e){}criarImagem({prompt:p,formato:$("crSel").value})}};
 
-document.querySelectorAll("#dock button").forEach(b=>b.onclick=()=>{const k=b.dataset.k;
+document.querySelectorAll("#dock button").forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(k==="cmd"){abrirComandos();return}
   if(k==="imagem"||k==="app"||k==="video")abrirCriar(k);
   else if(k==="proj")abrirProj();
   else if(k==="notas"){limparAcoes();addInfo(NOTAS.length?NOTAS.map((n,i)=>(i+1)+". "+n).join("\n"):"Nenhuma nota. Diga: \"anota que...\"")}
